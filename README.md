@@ -191,8 +191,8 @@ Developed for Hossana Police Department
 ## 📞 Support
 
 For support and queries:
-- Email: support@hossanapolice.gov.et
-- Emergency: 911
+- Email:ashenafiabebe604"gmail.com
+- Emergency: 0997255611
 
 ---
 
