@@ -1,0 +1,125 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="shieldBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A8A"/>
+      <stop offset="100%" style="stop-color:#102A43"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5C842"/>
+      <stop offset="100%" style="stop-color:#D4A72C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer gold border shield -->
+  <path d="M150 8 L28 54 L28 158 C28 228 90 278 150 294 C210 278 272 228 272 158 L272 54 Z"
+        fill="url(#goldGrad)" />
+
+  <!-- Inner navy shield -->
+  <path d="M150 22 L42 64 L42 158 C42 220 97 265 150 280 C203 265 258 220 258 158 L258 64 Z"
+        fill="url(#shieldBg)" />
+
+  <!-- Gold inner border ring -->
+  <path d="M150 34 L54 72 L54 158 C54 212 103 253 150 267 C197 253 246 212 246 158 L246 72 Z"
+        fill="none" stroke="#D4A72C" stroke-width="2.5"/>
+
+  <!-- Top gold banner -->
+  <rect x="62" y="46" width="176" height="30" rx="6" fill="#D4A72C"/>
+  <text x="150" y="67" font-family="Arial Black,sans-serif" font-size="13" font-weight="900"
+        fill="#102A43" text-anchor="middle" letter-spacing="1">HOSSANA</text>
+
+  <!-- Olive branches left -->
+  <g stroke="#22C55E" stroke-width="2" fill="none">
+    <path d="M68 160 C55 140 50 120 58 100"/>
+    <path d="M68 160 C52 148 44 130 48 110"/>
+    <path d="M68 160 C58 143 56 123 62 103"/>
+    <!-- Leaves -->
+    <ellipse cx="58" cy="100" rx="7" ry="4" fill="#16A34A" transform="rotate(-30 58 100)"/>
+    <ellipse cx="48" cy="110" rx="7" ry="4" fill="#16A34A" transform="rotate(-50 48 110)"/>
+    <ellipse cx="62" cy="103" rx="7" ry="4" fill="#16A34A" transform="rotate(-15 62 103)"/>
+    <ellipse cx="55" cy="125" rx="6" ry="3.5" fill="#22C55E" transform="rotate(-40 55 125)"/>
+    <ellipse cx="51" cy="140" rx="6" ry="3.5" fill="#22C55E" transform="rotate(-55 51 140)"/>
+  </g>
+
+  <!-- Olive branches right -->
+  <g stroke="#22C55E" stroke-width="2" fill="none">
+    <path d="M232 160 C245 140 250 120 242 100"/>
+    <path d="M232 160 C248 148 256 130 252 110"/>
+    <path d="M232 160 C242 143 244 123 238 103"/>
+    <ellipse cx="242" cy="100" rx="7" ry="4" fill="#16A34A" transform="rotate(30 242 100)"/>
+    <ellipse cx="252" cy="110" rx="7" ry="4" fill="#16A34A" transform="rotate(50 252 110)"/>
+    <ellipse cx="238" cy="103" rx="7" ry="4" fill="#16A34A" transform="rotate(15 238 103)"/>
+    <ellipse cx="245" cy="125" rx="6" ry="3.5" fill="#22C55E" transform="rotate(40 245 125)"/>
+    <ellipse cx="249" cy="140" rx="6" ry="3.5" fill="#22C55E" transform="rotate(55 249 140)"/>
+  </g>
+
+  <!-- Center circle (scene background) -->
+  <circle cx="150" cy="155" r="62" fill="#2563EB" opacity="0.9"/>
+  <circle cx="150" cy="155" r="60" fill="url(#shieldBg)"/>
+
+  <!-- City skyline silhouette -->
+  <g fill="#1D4ED8" opacity="0.7">
+    <rect x="90" y="150" width="10" height="30"/>
+    <rect x="104" y="140" width="12" height="40"/>
+    <rect x="118" y="145" width="8" height="35"/>
+    <rect x="174" y="145" width="8" height="35"/>
+    <rect x="184" y="140" width="12" height="40"/>
+    <rect x="200" y="150" width="10" height="30"/>
+  </g>
+
+  <!-- Sunrays behind officer -->
+  <g stroke="#D4A72C" stroke-width="1.5" opacity="0.4">
+    <line x1="150" y1="100" x2="150" y2="82"/>
+    <line x1="150" y1="100" x2="168" y2="86"/>
+    <line x1="150" y1="100" x2="132" y2="86"/>
+    <line x1="150" y1="100" x2="174" y2="96"/>
+    <line x1="150" y1="100" x2="126" y2="96"/>
+  </g>
+
+  <!-- Officer silhouette body -->
+  <ellipse cx="150" cy="175" rx="26" ry="30" fill="#102A43"/>
+  <!-- Shoulders -->
+  <rect x="122" y="150" width="56" height="20" rx="8" fill="#102A43"/>
+  <!-- Gold shoulder bars -->
+  <rect x="122" y="150" width="14" height="5" rx="2" fill="#D4A72C"/>
+  <rect x="164" y="150" width="14" height="5" rx="2" fill="#D4A72C"/>
+  <!-- Neck/head -->
+  <ellipse cx="150" cy="143" rx="12" ry="14" fill="#C9A87C"/>
+  <!-- Police cap -->
+  <ellipse cx="150" cy="132" rx="17" ry="6" fill="#102A43"/>
+  <rect x="133" y="126" width="34" height="10" rx="3" fill="#102A43"/>
+  <!-- Cap badge -->
+  <circle cx="150" cy="128" r="4" fill="#D4A72C"/>
+  <!-- Chest star badge -->
+  <path d="M150 161 l2 5 h5 l-4 3 1.5 5 L150 171 l-4.5 3 1.5-5-4-3h5z" fill="#D4A72C"/>
+  <!-- Tie -->
+  <path d="M148 155 L150 170 L152 155 Z" fill="#D4A72C"/>
+
+  <!-- Bottom banner -->
+  <rect x="58" y="222" width="184" height="28" rx="6" fill="#2563EB"/>
+  <text x="150" y="237" font-family="Arial Black,sans-serif" font-size="9.5" font-weight="900"
+        fill="#FFFFFF" text-anchor="middle" letter-spacing="0.5">HOSSANA POLICE STATION</text>
+  <text x="150" y="247" font-family="Arial,sans-serif" font-size="7.5" font-weight="600"
+        fill="#D4A72C" text-anchor="middle" letter-spacing="1">MANAGEMENT SYSTEM</text>
+
+  <!-- Tagline banner -->
+  <rect x="80" y="84" width="140" height="18" rx="4" fill="rgba(0,0,0,0.4)"/>
+  <text x="150" y="96.5" font-family="Arial,sans-serif" font-size="8" font-weight="700" font-style="italic"
+        fill="#D4A72C" text-anchor="middle" letter-spacing="1.5">Serve · Protect · Secure</text>
+
+  <!-- Gold star at top -->
+  <path d="M150 2 l3 8 h9 l-7 5 2.5 8.5 L150 19 l-7.5 4.5 2.5-8.5-7-5h9z" fill="#D4A72C"/>
+
+  <!-- Bottom scales of justice -->
+  <g fill="#D4A72C">
+    <!-- Beam -->
+    <rect x="140" y="254" width="20" height="2.5" rx="1.25"/>
+    <rect x="149" y="254" width="2" height="12" rx="1"/>
+    <!-- Left pan -->
+    <path d="M133 256 C131 262 135 265 141 263 C147 261 148 256 143 255 Z" fill="#D4A72C" opacity="0.9"/>
+    <!-- Right pan -->
+    <path d="M167 256 C169 262 165 265 159 263 C153 261 152 256 157 255 Z" fill="#D4A72C" opacity="0.9"/>
+    <!-- Chain lines -->
+    <line x1="140" y1="257" x2="137" y2="260" stroke="#D4A72C" stroke-width="1"/>
+    <line x1="160" y1="257" x2="163" y2="260" stroke="#D4A72C" stroke-width="1"/>
+  </g>
+</svg>
