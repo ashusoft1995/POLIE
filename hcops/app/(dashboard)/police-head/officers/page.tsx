@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Search, Plus, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, X, Filter } from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import ToastContainer, { ToastMessage, useAutoDismiss } from "@/components/ui/Toast";
+import ToastContainer, { ToastMessage, useAutoDismiss } from "@/components/ui/toast";
 
 const mockOfficers = [
   { id: "O001", name: "Det. Abebe Girma",     badge: "DET-012", rank: "Detective Sergeant",  department: "CID",         status: "Active" as const,   joined: "2018-03-15" },

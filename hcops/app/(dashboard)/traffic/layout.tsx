@@ -21,6 +21,7 @@ export default function TrafficLayout({ children }: { children: React.ReactNode 
   return (
     <DashboardShell navItems={navItems} roleLabel="Traffic Police" userName="Off. Kebede Alemu"
       userRole="Traffic Officer" profileHref="/traffic/profile"
+      settingsHref="/traffic/settings"
       metaMap={metaMap} fallbackMeta={{ title:"Traffic Police", breadcrumb:["Traffic Police"] }}>
       {children}
     </DashboardShell>

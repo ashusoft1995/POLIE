@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, Eye, FileText, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
-import ToastContainer, { ToastMessage, useAutoDismiss } from "@/components/ui/Toast";
+import ToastContainer, { ToastMessage, useAutoDismiss } from "@/components/ui/toast";
 import { mockClosureRequests } from "@/lib/mock-data/cases";
 import type { ClosureRequest } from "@/types";
 

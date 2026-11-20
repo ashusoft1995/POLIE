@@ -23,6 +23,7 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
   return (
     <DashboardShell navItems={navItems} roleLabel="HR Manager" userName="Insp. Almaz Bekele"
       userRole="HR Inspector" profileHref="/hr/profile"
+      settingsHref="/hr/settings"
       metaMap={metaMap} fallbackMeta={{ title:"HR Manager", breadcrumb:["HR Manager"] }}>
       {children}
     </DashboardShell>

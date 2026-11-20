@@ -21,6 +21,7 @@ export default function SystemAdminLayout({ children }: { children: React.ReactN
   return (
     <DashboardShell navItems={navItems} roleLabel="System Admin" userName="Sys. Admin Yonas Tesfaye"
       userRole="System Administrator" profileHref="/system-admin/profile"
+      settingsHref="/system-admin/settings"
       metaMap={metaMap} fallbackMeta={{ title:"System Admin", breadcrumb:["System Admin"] }}>
       {children}
     </DashboardShell>

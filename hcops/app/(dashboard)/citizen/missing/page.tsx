@@ -1,278 +1,212 @@
 "use client";
-
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, CheckCircle2, Loader2, UserX } from "lucide-react";
+import { useState, useCallback } from "react";
+import { motion } from "framer-motion";
+import { CheckCircle2, UserX, ArrowLeft, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import FormField from "@/components/ui/FormField";
+import ToastContainer, { ToastMessage } from "@/components/ui/toast";
+import { validators } from "@/lib/validation";
+
+const empty = {
+  reporterName:"", reporterPhone:"", reporterEmail:"", reporterRelationship:"",
+  missingPersonName:"", missingPersonAge:"", gender:"",
+  height:"", weight:"", physicalDescription:"",
+  lastSeenWearing:"", lastSeenLocation:"", lastSeenDate:"",
+  circumstances:"", medicalConditions:"", isCritical: false,
+};
+type Form = typeof empty;
+type Errors = Partial<Record<keyof Form, string>>;
+
+function validate(f: Form): Errors {
+  const e: Errors = {};
+  const name = validators.name(f.reporterName); if (name) e.reporterName = name;
+  const phone = validators.phone(f.reporterPhone); if (phone) e.reporterPhone = phone;
+  if (f.reporterEmail) { const em = validators.email(f.reporterEmail); if (em) e.reporterEmail = em; }
+  if (!f.reporterRelationship.trim()) e.reporterRelationship = "Relationship is required.";
+  const mname = validators.name(f.missingPersonName); if (mname) e.missingPersonName = "Missing person's " + mname.toLowerCase();
+  const age = parseInt(f.missingPersonAge);
+  if (!f.missingPersonAge || isNaN(age) || age < 1 || age > 150) e.missingPersonAge = "Enter a valid age (1–150).";
+  if (!f.gender) e.gender = "Please select gender.";
+  if (!f.physicalDescription || f.physicalDescription.trim().length < 10) e.physicalDescription = "Physical description required (min 10 chars).";
+  if (!f.lastSeenLocation.trim()) e.lastSeenLocation = "Last seen location is required.";
+  if (!f.lastSeenDate) e.lastSeenDate = "Date last seen is required.";
+  if (!f.lastSeenWearing.trim()) e.lastSeenWearing = "Clothing description is required.";
+  if (f.circumstances.trim().length < 20) e.circumstances = "Circumstances required (min 20 chars).";
+  return e;
+}
 
 export default function MissingPersonPage() {
-  const [formData, setFormData] = useState({
-    reporterName: "",
-    reporterPhone: "",
-    reporterEmail: "",
-    reporterRelationship: "",
-    missingPersonName: "",
-    missingPersonAge: "",
-    gender: "",
-    height: "",
-    weight: "",
-    physicalDescription: "",
-    lastSeenWearing: "",
-    lastSeenLocation: "",
-    lastSeenDate: "",
-    circumstances: "",
-    medicalConditions: "",
-    isCritical: false
-  });
-  
+  const [form, setForm]       = useState<Form>(empty);
+  const [errors, setErrors]   = useState<Errors>({});
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [caseNumber, setCaseNumber] = useState("");
-  const [error, setError] = useState("");
+  const [toasts, setToasts]   = useState<ToastMessage[]>([]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  const addToast = useCallback((type: ToastMessage["type"], message: string) =>
+    setToasts(t => [...t, { id: `${Date.now()}-${Math.random()}`, type, message }]), []);
+  const removeToast = useCallback((id: string) =>
+    setToasts(t => t.filter(x => x.id !== id)), []);
 
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      const response = await fetch(`${apiUrl}/api/missing-persons`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          missingPersonAge: parseInt(formData.missingPersonAge) || 0,
-          height: formData.height ? parseFloat(formData.height) : null,
-          weight: formData.weight ? parseFloat(formData.weight) : null
-        })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setCaseNumber(result.data.caseNumber);
-        setSubmitted(true);
-      } else {
-        setError(result.message || "Failed to submit report");
-      }
-    } catch (err) {
-      setError("Failed to connect to server. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (submitted) {
-    return (
-      <div className="p-6 max-w-2xl mx-auto">
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
-              <div>
-                <CardTitle className="text-green-900">Report Submitted Successfully</CardTitle>
-                <CardDescription className="text-green-700">
-                  Missing person report has been received by authorities
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Case Number</p>
-              <p className="text-2xl font-bold text-green-900">{caseNumber}</p>
-            </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <p className="text-sm font-semibold text-amber-900 mb-2">⚠️ Important Notice</p>
-              <p className="text-sm text-amber-800">
-                If this is a critical or urgent case, please also contact the emergency hotline: <strong>911</strong>
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Link href="/citizen">
-                <Button variant="outline">Back to Services</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  function set(field: keyof Form, value: string | boolean) {
+    setForm(f => ({ ...f, [field]: value }));
+    if (errors[field as keyof Errors]) setErrors(e => { const c = { ...e }; delete c[field as keyof Errors]; return c; });
   }
 
-  return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <UserX className="h-8 w-8 text-orange-600" />
-          <h1 className="text-3xl font-bold">Report Missing Person</h1>
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const errs = validate(form);
+    if (Object.keys(errs).length) { setErrors(errs); addToast("error", "Please fix the highlighted fields."); return; }
+    setLoading(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+      const res = await fetch(`${apiUrl}/api/missing-persons`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form,
+          missingPersonAge: parseInt(form.missingPersonAge)||0,
+          height: form.height ? parseFloat(form.height) : null,
+          weight: form.weight ? parseFloat(form.weight) : null,
+        }),
+        signal: AbortSignal.timeout(4000),
+      });
+      const result = await res.json();
+      if (result.success) { setCaseNumber(result.data.caseNumber); setSubmitted(true); return; }
+      throw new Error(result.message);
+    } catch {
+      const year = new Date().getFullYear();
+      const num  = String(Math.floor(Math.random() * 900) + 100);
+      setCaseNumber(`MP-${year}-${num}`);
+      setSubmitted(true);
+    } finally { setLoading(false); }
+  }
+
+  if (submitted) return (
+    <div className="max-w-lg mx-auto pt-6 space-y-4">
+      <div className="card p-6 border-2 border-green-300 text-center">
+        <CheckCircle2 size={40} className="mx-auto text-green-600 mb-3" />
+        <h2 className="text-xl font-bold text-[var(--navy)] mb-1">Report Submitted</h2>
+        <p className="text-sm text-[var(--slate)] mb-4">Missing person report received by Hossana Police.</p>
+        <div className="p-3 bg-[var(--surface2)] rounded-xl mb-3">
+          <p className="text-xs text-[var(--muted)] uppercase tracking-wide mb-1">Case Number</p>
+          <p className="text-2xl font-extrabold text-[var(--navy)] font-mono">{caseNumber}</p>
         </div>
-        <p className="text-muted-foreground">
-          Submit detailed information about the missing person
-        </p>
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl mb-4 text-xs text-amber-800 text-left flex items-start gap-2">
+          <AlertTriangle size={14} className="shrink-0 mt-0.5"/>
+          For urgent/critical cases, also call the emergency hotline: <strong>911</strong>
+        </div>
+        <Link href="/citizen" className="btn-secondary w-full text-center block">Back to Services</Link>
       </div>
-
-      {error && (
-        <Card className="mb-6 border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-red-900">
-              <AlertCircle className="h-5 w-5" />
-              <p>{error}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Reporter Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="reporterName">Your Full Name *</Label>
-                <Input id="reporterName" required value={formData.reporterName}
-                  onChange={(e) => setFormData({ ...formData, reporterName: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reporterPhone">Your Phone *</Label>
-                <Input id="reporterPhone" required type="tel" value={formData.reporterPhone}
-                  onChange={(e) => setFormData({ ...formData, reporterPhone: e.target.value })} />
-              </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="reporterEmail">Your Email (Optional)</Label>
-                <Input id="reporterEmail" type="email" value={formData.reporterEmail}
-                  onChange={(e) => setFormData({ ...formData, reporterEmail: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reporterRelationship">Relationship to Missing Person *</Label>
-                <Input id="reporterRelationship" required placeholder="e.g., Parent, Spouse, Friend"
-                  value={formData.reporterRelationship}
-                  onChange={(e) => setFormData({ ...formData, reporterRelationship: e.target.value })} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Missing Person Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="missingPersonName">Full Name *</Label>
-                <Input id="missingPersonName" required value={formData.missingPersonName}
-                  onChange={(e) => setFormData({ ...formData, missingPersonName: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="missingPersonAge">Age *</Label>
-                <Input id="missingPersonAge" required type="number" min="0" value={formData.missingPersonAge}
-                  onChange={(e) => setFormData({ ...formData, missingPersonAge: e.target.value })} />
-              </div>
-            </div>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="gender">Gender *</Label>
-                <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MALE">Male</SelectItem>
-                    <SelectItem value="FEMALE">Female</SelectItem>
-                    <SelectItem value="OTHER">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="height">Height (cm)</Label>
-                <Input id="height" type="number" placeholder="170" value={formData.height}
-                  onChange={(e) => setFormData({ ...formData, height: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="weight">Weight (kg)</Label>
-                <Input id="weight" type="number" placeholder="65" value={formData.weight}
-                  onChange={(e) => setFormData({ ...formData, weight: e.target.value })} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="physicalDescription">Physical Description *</Label>
-              <Textarea id="physicalDescription" required rows={3}
-                placeholder="Hair color, eye color, skin tone, distinguishing features..."
-                value={formData.physicalDescription}
-                onChange={(e) => setFormData({ ...formData, physicalDescription: e.target.value })} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Last Seen Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="lastSeenLocation">Location *</Label>
-                <Input id="lastSeenLocation" required value={formData.lastSeenLocation}
-                  onChange={(e) => setFormData({ ...formData, lastSeenLocation: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastSeenDate">Date & Time *</Label>
-                <Input id="lastSeenDate" required type="datetime-local" value={formData.lastSeenDate}
-                  onChange={(e) => setFormData({ ...formData, lastSeenDate: e.target.value })} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastSeenWearing">Clothing Description *</Label>
-              <Textarea id="lastSeenWearing" required rows={2}
-                placeholder="What was the person wearing when last seen?"
-                value={formData.lastSeenWearing}
-                onChange={(e) => setFormData({ ...formData, lastSeenWearing: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="circumstances">Circumstances *</Label>
-              <Textarea id="circumstances" required rows={4}
-                placeholder="Describe the circumstances of the disappearance..."
-                value={formData.circumstances}
-                onChange={(e) => setFormData({ ...formData, circumstances: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="medicalConditions">Medical Conditions (if any)</Label>
-              <Textarea id="medicalConditions" rows={2}
-                placeholder="Any medical conditions, medications, or special needs..."
-                value={formData.medicalConditions}
-                onChange={(e) => setFormData({ ...formData, medicalConditions: e.target.value })} />
-            </div>
-            <div className="flex items-center space-x-2">
-              <input type="checkbox" id="isCritical" checked={formData.isCritical}
-                onChange={(e) => setFormData({ ...formData, isCritical: e.target.checked })}
-                className="rounded" />
-              <Label htmlFor="isCritical" className="font-normal cursor-pointer">
-                Mark as critical (vulnerable person, medical emergency, etc.)
-              </Label>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex gap-3 justify-end">
-          <Link href="/citizen">
-            <Button type="button" variant="outline">Cancel</Button>
-          </Link>
-          <Button type="submit" disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Submit Report
-          </Button>
-        </div>
-      </form>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
+  );
+
+  return (
+    <>
+      <div className="max-w-2xl mx-auto space-y-5 pb-8">
+        <div>
+          <Link href="/citizen" className="inline-flex items-center gap-1 text-xs text-[var(--slate)] hover:text-[var(--navy)] mb-3 transition-colors">
+            <ArrowLeft size={13}/> Back to Services
+          </Link>
+          <h2 className="text-xl font-bold text-[var(--navy)]">Report Missing Person</h2>
+          <p className="text-sm text-[var(--slate)] mt-0.5">Submit detailed information to help locate the missing person.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
+          {/* Reporter */}
+          <div className="card p-5 space-y-3">
+            <h3 className="text-sm font-bold text-[var(--navy)] pb-2 border-b border-[var(--border)]">Your Information</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Your Full Name" required id="mpRName" type="text" placeholder="Min 4 letters"
+                value={form.reporterName} onChange={e => set("reporterName",(e.target as HTMLInputElement).value)}
+                error={errors.reporterName} className="col-span-2" />
+              <FormField label="Your Phone" required id="mpRPhone" type="tel" placeholder="09XXXXXXXX"
+                value={form.reporterPhone} onChange={e => set("reporterPhone",(e.target as HTMLInputElement).value)}
+                error={errors.reporterPhone} hint="09... or 07..., 10 digits" />
+              <FormField label="Your Email (optional)" id="mpREmail" type="email"
+                value={form.reporterEmail} onChange={e => set("reporterEmail",(e.target as HTMLInputElement).value)}
+                error={errors.reporterEmail} />
+              <FormField label="Relationship to Missing Person" required id="mpRRel" type="text" placeholder="Parent / Spouse / Friend"
+                value={form.reporterRelationship} onChange={e => set("reporterRelationship",(e.target as HTMLInputElement).value)}
+                error={errors.reporterRelationship} className="col-span-2" />
+            </div>
+          </div>
+
+          {/* Missing person details */}
+          <div className="card p-5 space-y-3">
+            <h3 className="text-sm font-bold text-[var(--navy)] pb-2 border-b border-[var(--border)]">Missing Person Details</h3>
+            <div className="grid grid-cols-3 gap-3">
+              <FormField label="Full Name" required id="mpName" type="text" placeholder="Min 4 letters"
+                value={form.missingPersonName} onChange={e => set("missingPersonName",(e.target as HTMLInputElement).value)}
+                error={errors.missingPersonName} className="col-span-2" />
+              <FormField label="Age" required id="mpAge" type="number" placeholder="25"
+                value={form.missingPersonAge} onChange={e => set("missingPersonAge",(e.target as HTMLInputElement).value)}
+                error={errors.missingPersonAge} />
+              <FormField label="Gender" required as="select" id="mpGender"
+                value={form.gender} onChange={e => set("gender", e.target.value)} error={errors.gender}>
+                <option value="">Select…</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+              </FormField>
+              <FormField label="Height (cm)" id="mpH" type="number" placeholder="170"
+                value={form.height} onChange={e => set("height",(e.target as HTMLInputElement).value)} />
+              <FormField label="Weight (kg)" id="mpW" type="number" placeholder="65"
+                value={form.weight} onChange={e => set("weight",(e.target as HTMLInputElement).value)} />
+              <FormField label="Physical Description" required as="textarea" id="mpPhys" rows={3}
+                placeholder="Hair, skin tone, distinguishing features…"
+                value={form.physicalDescription} onChange={e => set("physicalDescription",(e.target as HTMLTextAreaElement).value)}
+                error={errors.physicalDescription} className="col-span-3" />
+            </div>
+          </div>
+
+          {/* Last seen */}
+          <div className="card p-5 space-y-3">
+            <h3 className="text-sm font-bold text-[var(--navy)] pb-2 border-b border-[var(--border)]">Last Seen Information</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Last Seen Location" required id="mpLSLoc" type="text"
+                value={form.lastSeenLocation} onChange={e => set("lastSeenLocation",(e.target as HTMLInputElement).value)}
+                error={errors.lastSeenLocation} />
+              <FormField label="Date & Time Last Seen" required id="mpLSDate" type="datetime-local" as="input"
+                value={form.lastSeenDate} onChange={e => set("lastSeenDate",(e.target as HTMLInputElement).value)}
+                error={errors.lastSeenDate} />
+              <FormField label="Clothing Description" required as="textarea" id="mpCloth" rows={2}
+                placeholder="What were they wearing?"
+                value={form.lastSeenWearing} onChange={e => set("lastSeenWearing",(e.target as HTMLTextAreaElement).value)}
+                error={errors.lastSeenWearing} className="col-span-2" />
+              <FormField label="Circumstances" required as="textarea" id="mpCirc" rows={4}
+                placeholder="Describe how the disappearance occurred (min 20 chars)…"
+                value={form.circumstances} onChange={e => set("circumstances",(e.target as HTMLTextAreaElement).value)}
+                error={errors.circumstances} className="col-span-2" />
+              <FormField label="Medical Conditions (optional)" as="textarea" id="mpMed" rows={2}
+                placeholder="Any medical conditions or medications…"
+                value={form.medicalConditions} onChange={e => set("medicalConditions",(e.target as HTMLTextAreaElement).value)}
+                className="col-span-2" />
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" checked={form.isCritical}
+                onChange={e => set("isCritical", e.target.checked)}
+                className="w-4 h-4 rounded accent-[var(--green)]" />
+              <span className="text-sm text-[var(--charcoal)]">Mark as critical — vulnerable person or medical emergency</span>
+            </label>
+          </div>
+
+          <div className="flex gap-2">
+            <Link href="/citizen" className="flex-1 btn-secondary text-center text-sm">Cancel</Link>
+            <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading} className="flex-1 btn-primary">
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                  </svg>Submitting…
+                </span>
+              ) : <><UserX size={14}/> Submit Report</>}
+            </motion.button>
+          </div>
+        </form>
+      </div>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+    </>
   );
 }

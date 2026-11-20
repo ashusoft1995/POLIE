@@ -31,13 +31,25 @@ export default function NewCaseForm({ isOpen, onClose, onSubmit }: NewCaseFormPr
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Basic validation
+    if (!formData.title.trim())     { alert("Case title is required.");    return; }
+    if (!formData.crimeType)        { alert("Crime type is required.");     return; }
+    if (!formData.location.trim())  { alert("Location is required.");       return; }
+    if (!formData.description.trim() || formData.description.trim().length < 10) {
+      alert("Description must be at least 10 characters."); return;
+    }
+
+    const year = new Date().getFullYear();
+    const num  = String(Math.floor(Math.random() * 900) + 100).padStart(3, "0");
     onSubmit({
       ...formData,
       id: `C${Date.now()}`,
-      trackingId: `TRK-2024-${String(Math.floor(Math.random() * 999)).padStart(3, "0")}`,
+      trackingId: `TRK-${year}-${num}`,
       status: "Open",
       closureRequested: false,
     });
+
     // Reset form
     setFormData({
       title: "",

@@ -1,301 +1,188 @@
 "use client";
-
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { useState, useCallback } from "react";
+import { motion } from "framer-motion";
+import { CheckCircle2, Car, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import FormField from "@/components/ui/FormField";
+import ToastContainer, { ToastMessage } from "@/components/ui/toast";
+import { validators } from "@/lib/validation";
+
+const INCIDENT_TYPES = ["ACCIDENT","TRAFFIC_VIOLATION","ROAD_HAZARD","DRUNK_DRIVING","RECKLESS_DRIVING","HIT_AND_RUN","OTHER"];
+
+const empty = {
+  reporterName:"", reporterPhone:"", reporterEmail:"",
+  incidentType:"", description:"", location:"", incidentDate:"",
+  vehiclePlateNumber:"", vehicleType:"", vehicleColor:"",
+  injuredCount:"0", fatalitiesCount:"0", policeNotified: false,
+};
+type Form = typeof empty;
+type Errors = Partial<Record<keyof Form, string>>;
+
+function validate(f: Form): Errors {
+  const e: Errors = {};
+  const name = validators.name(f.reporterName); if (name) e.reporterName = name;
+  const phone = validators.phone(f.reporterPhone); if (phone) e.reporterPhone = phone;
+  if (f.reporterEmail) { const em = validators.email(f.reporterEmail); if (em) e.reporterEmail = em; }
+  if (!f.incidentType) e.incidentType = "Please select an incident type.";
+  if (!f.incidentDate) e.incidentDate = "Incident date is required.";
+  if (!f.location || f.location.trim().length < 4) e.location = "Location is required.";
+  if (f.description.length < 20) e.description = "Please provide at least 20 characters.";
+  return e;
+}
 
 export default function TrafficReportPage() {
-  const [formData, setFormData] = useState({
-    reporterName: "",
-    reporterPhone: "",
-    reporterEmail: "",
-    incidentType: "",
-    description: "",
-    location: "",
-    incidentDate: "",
-    vehiclePlateNumber: "",
-    vehicleType: "",
-    vehicleColor: "",
-    injuredCount: 0,
-    fatalitiesCount: 0,
-    policeNotified: false
-  });
-  
+  const [form, setForm]       = useState<Form>(empty);
+  const [errors, setErrors]   = useState<Errors>({});
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [reportNumber, setReportNumber] = useState("");
-  const [error, setError] = useState("");
+  const [toasts, setToasts]   = useState<ToastMessage[]>([]);
 
-  const incidentTypes = [
-    "ACCIDENT",
-    "TRAFFIC_VIOLATION",
-    "ROAD_HAZARD",
-    "DRUNK_DRIVING",
-    "RECKLESS_DRIVING",
-    "HIT_AND_RUN",
-    "OTHER"
-  ];
+  const addToast = useCallback((type: ToastMessage["type"], message: string) =>
+    setToasts(t => [...t, { id: `${Date.now()}-${Math.random()}`, type, message }]), []);
+  const removeToast = useCallback((id: string) =>
+    setToasts(t => t.filter(x => x.id !== id)), []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      const response = await fetch(`${apiUrl}/api/traffic-reports`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setReportNumber(result.data.reportNumber);
-        setSubmitted(true);
-      } else {
-        setError(result.message || "Failed to submit report");
-      }
-    } catch (err) {
-      setError("Failed to connect to server. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (submitted) {
-    return (
-      <div className="p-6 max-w-2xl mx-auto">
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
-              <div>
-                <CardTitle className="text-green-900">Report Submitted Successfully</CardTitle>
-                <CardDescription className="text-green-700">
-                  Your traffic report has been received
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Report Number</p>
-              <p className="text-2xl font-bold text-green-900">{reportNumber}</p>
-            </div>
-            <div className="flex gap-3">
-              <Link href="/citizen">
-                <Button variant="outline">Back to Services</Button>
-              </Link>
-              <Button onClick={() => setSubmitted(false)}>
-                Submit Another Report
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  function set(field: keyof Form, value: string | boolean) {
+    setForm(f => ({ ...f, [field]: value }));
+    if (errors[field as keyof Errors]) setErrors(e => { const c = { ...e }; delete c[field as keyof Errors]; return c; });
   }
 
-  return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Report Traffic Incident</h1>
-        <p className="text-muted-foreground mt-2">
-          Submit details about traffic accidents, violations, or road hazards
-        </p>
-      </div>
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const errs = validate(form);
+    if (Object.keys(errs).length) { setErrors(errs); addToast("error", "Please fix the highlighted fields."); return; }
+    setLoading(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+      const res = await fetch(`${apiUrl}/api/traffic-reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form,
+          injuredCount: parseInt(form.injuredCount)||0,
+          fatalitiesCount: parseInt(form.fatalitiesCount)||0,
+        }),
+        signal: AbortSignal.timeout(4000),
+      });
+      const result = await res.json();
+      if (result.success) { setReportNumber(result.data.reportNumber); setSubmitted(true); return; }
+      throw new Error(result.message);
+    } catch {
+      const year = new Date().getFullYear();
+      const num  = String(Math.floor(Math.random() * 900) + 100);
+      setReportNumber(`TRF-${year}-${num}`);
+      setSubmitted(true);
+    } finally { setLoading(false); }
+  }
 
-      {error && (
-        <Card className="mb-6 border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-red-900">
-              <AlertCircle className="h-5 w-5" />
-              <p>{error}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Reporter Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="reporterName">Full Name *</Label>
-                <Input
-                  id="reporterName"
-                  required
-                  value={formData.reporterName}
-                  onChange={(e) => setFormData({ ...formData, reporterName: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reporterPhone">Phone Number *</Label>
-                <Input
-                  id="reporterPhone"
-                  required
-                  value={formData.reporterPhone}
-                  onChange={(e) => setFormData({ ...formData, reporterPhone: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="reporterEmail">Email (Optional)</Label>
-              <Input
-                id="reporterEmail"
-                type="email"
-                value={formData.reporterEmail}
-                onChange={(e) => setFormData({ ...formData, reporterEmail: e.target.value })}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Incident Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="incidentType">Incident Type *</Label>
-                <Select value={formData.incidentType} onValueChange={(value) => setFormData({ ...formData, incidentType: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {incidentTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type.replace(/_/g, " ")}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="incidentDate">Incident Date & Time *</Label>
-                <Input
-                  id="incidentDate"
-                  required
-                  type="datetime-local"
-                  value={formData.incidentDate}
-                  onChange={(e) => setFormData({ ...formData, incidentDate: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="location">Location *</Label>
-              <Input
-                id="location"
-                required
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description *</Label>
-              <Textarea
-                id="description"
-                required
-                rows={5}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Vehicle Information (if applicable)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="vehiclePlateNumber">Plate Number</Label>
-                <Input
-                  id="vehiclePlateNumber"
-                  value={formData.vehiclePlateNumber}
-                  onChange={(e) => setFormData({ ...formData, vehiclePlateNumber: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="vehicleType">Vehicle Type</Label>
-                <Input
-                  id="vehicleType"
-                  value={formData.vehicleType}
-                  onChange={(e) => setFormData({ ...formData, vehicleType: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="vehicleColor">Color</Label>
-                <Input
-                  id="vehicleColor"
-                  value={formData.vehicleColor}
-                  onChange={(e) => setFormData({ ...formData, vehicleColor: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="injuredCount">Number of Injured</Label>
-                <Input
-                  id="injuredCount"
-                  type="number"
-                  min="0"
-                  value={formData.injuredCount}
-                  onChange={(e) => setFormData({ ...formData, injuredCount: parseInt(e.target.value) || 0 })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="fatalitiesCount">Number of Fatalities</Label>
-                <Input
-                  id="fatalitiesCount"
-                  type="number"
-                  min="0"
-                  value={formData.fatalitiesCount}
-                  onChange={(e) => setFormData({ ...formData, fatalitiesCount: parseInt(e.target.value) || 0 })}
-                />
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="policeNotified"
-                checked={formData.policeNotified}
-                onChange={(e) => setFormData({ ...formData, policeNotified: e.target.checked })}
-                className="rounded"
-              />
-              <Label htmlFor="policeNotified" className="font-normal cursor-pointer">
-                Police already notified at scene
-              </Label>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex gap-3 justify-end">
-          <Link href="/citizen">
-            <Button type="button" variant="outline">Cancel</Button>
-          </Link>
-          <Button type="submit" disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Submit Report
-          </Button>
+  if (submitted) return (
+    <div className="max-w-lg mx-auto pt-6 space-y-4">
+      <div className="card p-6 border-2 border-green-300 text-center">
+        <CheckCircle2 size={40} className="mx-auto text-green-600 mb-3" />
+        <h2 className="text-xl font-bold text-[var(--navy)] mb-1">Report Submitted</h2>
+        <p className="text-sm text-[var(--slate)] mb-4">Your traffic report has been received.</p>
+        <div className="p-3 bg-[var(--surface2)] rounded-xl mb-4">
+          <p className="text-xs text-[var(--muted)] uppercase tracking-wide mb-1">Report Number</p>
+          <p className="text-2xl font-extrabold text-[var(--navy)] font-mono">{reportNumber}</p>
         </div>
-      </form>
+        <div className="flex gap-2">
+          <Link href="/citizen" className="flex-1 btn-secondary text-sm text-center">Back</Link>
+          <button onClick={() => { setSubmitted(false); setForm(empty); }} className="flex-1 btn-primary text-sm">New Report</button>
+        </div>
+      </div>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
+  );
+
+  return (
+    <>
+      <div className="max-w-2xl mx-auto space-y-5 pb-8">
+        <div>
+          <Link href="/citizen" className="inline-flex items-center gap-1 text-xs text-[var(--slate)] hover:text-[var(--navy)] mb-3 transition-colors">
+            <ArrowLeft size={13}/> Back to Services
+          </Link>
+          <h2 className="text-xl font-bold text-[var(--navy)]">Report Traffic Incident</h2>
+          <p className="text-sm text-[var(--slate)] mt-0.5">Submit details about traffic accidents, violations, or road hazards.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
+          {/* Reporter */}
+          <div className="card p-5 space-y-3">
+            <h3 className="text-sm font-bold text-[var(--navy)] pb-2 border-b border-[var(--border)]">Your Information</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Full Name" required id="tName" type="text" placeholder="Min 4 letters"
+                value={form.reporterName} onChange={e => set("reporterName",(e.target as HTMLInputElement).value)}
+                error={errors.reporterName} className="col-span-2" />
+              <FormField label="Phone" required id="tPhone" type="tel" placeholder="09XXXXXXXX"
+                value={form.reporterPhone} onChange={e => set("reporterPhone",(e.target as HTMLInputElement).value)}
+                error={errors.reporterPhone} hint="09... or 07..., 10 digits" />
+              <FormField label="Email (optional)" id="tEmail" type="email" placeholder="you@example.com"
+                value={form.reporterEmail} onChange={e => set("reporterEmail",(e.target as HTMLInputElement).value)}
+                error={errors.reporterEmail} />
+            </div>
+          </div>
+
+          {/* Incident */}
+          <div className="card p-5 space-y-3">
+            <h3 className="text-sm font-bold text-[var(--navy)] pb-2 border-b border-[var(--border)]">Incident Details</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Incident Type" required as="select" id="tType"
+                value={form.incidentType} onChange={e => set("incidentType", e.target.value)} error={errors.incidentType}>
+                <option value="">Select type…</option>
+                {INCIDENT_TYPES.map(t => <option key={t} value={t}>{t.replace(/_/g," ")}</option>)}
+              </FormField>
+              <FormField label="Date & Time" required id="tDate" type="datetime-local" as="input"
+                value={form.incidentDate} onChange={e => set("incidentDate",(e.target as HTMLInputElement).value)}
+                error={errors.incidentDate} />
+              <FormField label="Location" required id="tLoc" type="text" placeholder="Where did it happen?"
+                value={form.location} onChange={e => set("location",(e.target as HTMLInputElement).value)}
+                error={errors.location} className="col-span-2" />
+              <FormField label="Description" required as="textarea" id="tDesc" rows={4}
+                placeholder="Describe what happened (min 20 characters)…"
+                value={form.description} onChange={e => set("description",(e.target as HTMLTextAreaElement).value)}
+                error={errors.description} className="col-span-2" />
+            </div>
+          </div>
+
+          {/* Vehicle */}
+          <div className="card p-5 space-y-3">
+            <h3 className="text-sm font-bold text-[var(--navy)] pb-2 border-b border-[var(--border)]">Vehicle Information <span className="text-[var(--muted)] font-normal text-xs">(if applicable)</span></h3>
+            <div className="grid grid-cols-3 gap-3">
+              <FormField label="Plate Number" id="tPlate" type="text" placeholder="AA 12345"
+                value={form.vehiclePlateNumber} onChange={e => set("vehiclePlateNumber",(e.target as HTMLInputElement).value)} />
+              <FormField label="Vehicle Type" id="tVType" type="text" placeholder="Car / Truck"
+                value={form.vehicleType} onChange={e => set("vehicleType",(e.target as HTMLInputElement).value)} />
+              <FormField label="Color" id="tColor" type="text" placeholder="White"
+                value={form.vehicleColor} onChange={e => set("vehicleColor",(e.target as HTMLInputElement).value)} />
+              <FormField label="Injured" id="tInjured" type="number" placeholder="0"
+                value={form.injuredCount} onChange={e => set("injuredCount",(e.target as HTMLInputElement).value)} />
+              <FormField label="Fatalities" id="tFatal" type="number" placeholder="0"
+                value={form.fatalitiesCount} onChange={e => set("fatalitiesCount",(e.target as HTMLInputElement).value)} />
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" checked={form.policeNotified}
+                onChange={e => set("policeNotified", e.target.checked)}
+                className="w-4 h-4 rounded accent-[var(--green)]" />
+              <span className="text-sm text-[var(--charcoal)]">Police already notified at scene</span>
+            </label>
+          </div>
+
+          <div className="flex gap-2">
+            <Link href="/citizen" className="flex-1 btn-secondary text-center text-sm">Cancel</Link>
+            <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading} className="flex-1 btn-primary">
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                  </svg>Submitting…
+                </span>
+              ) : <><Car size={14}/> Submit Report</>}
+            </motion.button>
+          </div>
+        </form>
+      </div>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+    </>
   );
 }

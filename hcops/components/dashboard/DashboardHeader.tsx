@@ -39,6 +39,7 @@ interface Props {
   userRole: string;
   onMenuClick: () => void;
   profileHref?: string;
+  settingsHref?: string;
 }
 
 export default function DashboardHeader({
@@ -48,6 +49,7 @@ export default function DashboardHeader({
   userRole,
   onMenuClick,
   profileHref = "#",
+  settingsHref,
 }: Props) {
   const router = useRouter();
   const { dark, toggleDark, lang, setLang } = useTheme();
@@ -302,13 +304,15 @@ export default function DashboardHeader({
                       <UserCircle size={15} className="text-[var(--slate)]" />
                       My Profile
                     </button>
+                    {settingsHref && (
                     <button
-                      onClick={() => { setProfileOpen(false); router.push("/police-head/settings"); }}
+                      onClick={() => { setProfileOpen(false); router.push(settingsHref); }}
                       className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-[var(--charcoal)] hover:bg-[var(--surface2)] transition-colors"
                     >
                       <Settings size={15} className="text-[var(--slate)]" />
                       Settings
                     </button>
+                    )}
                   </div>
 
                   <div className="border-t border-[var(--border)] py-1">

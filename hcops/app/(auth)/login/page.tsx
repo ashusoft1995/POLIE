@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, AlertCircle, X, Mail, ArrowLeft, CheckCircle } from "lucide-react";
 import { loginApi, roleDashboardMap, forgotPasswordApi } from "@/lib/api";
+import { mockUsers, roleRedirectMap } from "@/lib/mock-data/auth";
 
 /* ── Shared glass input style ─────────────────────────────────── */
 const glassInput =
@@ -251,17 +252,32 @@ export default function LoginPage() {
     setError(""); setLoading(true);
     try {
       const res = await loginApi({ identifier: email.trim(), password });
-      if (!res.success || !res.data) {
-        setError(res.message || "Invalid credentials.");
-        setLoading(false); return;
+      if (res.success && res.data) {
+        const { accessToken, refreshToken, user } = res.data;
+        sessionStorage.setItem("hcops_token",   accessToken);
+        sessionStorage.setItem("hcops_refresh", refreshToken);
+        sessionStorage.setItem("hcops_user",    JSON.stringify(user));
+        router.push(roleDashboardMap[user.role] ?? "/");
+        return;
       }
-      const { accessToken, refreshToken, user } = res.data;
-      sessionStorage.setItem("hcops_token",   accessToken);
-      sessionStorage.setItem("hcops_refresh", refreshToken);
-      sessionStorage.setItem("hcops_user",    JSON.stringify(user));
-      router.push(roleDashboardMap[user.role] ?? "/");
+      // Backend returned an error response
+      throw new Error(res.message || "Invalid credentials.");
     } catch {
-      setError("Cannot reach server. Try again.");
+      // Backend unreachable or returned error — try mock demo login
+      const identifier = email.trim().toLowerCase();
+      const mockUser = mockUsers.find(
+        (u) =>
+          (u.email.toLowerCase() === identifier || u.name.toLowerCase() === identifier) &&
+          u.password === password,
+      );
+      if (mockUser) {
+        sessionStorage.setItem("hcops_user", JSON.stringify(mockUser));
+        sessionStorage.setItem("hcops_token", "demo-token");
+        router.push(roleRedirectMap[mockUser.role] ?? "/");
+        return;
+      }
+      setError("Invalid username or password.");
+    } finally {
       setLoading(false);
     }
   }
@@ -400,6 +416,31 @@ export default function LoginPage() {
             <GoogleIcon />
             Continue with Google
           </motion.button>
+
+          {/* Demo hint */}
+          <div className="rounded-xl px-4 py-3 text-[10px] leading-relaxed space-y-0.5"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}>
+            <p className="text-purple-200 font-bold mb-1.5">Demo accounts (backend not required)</p>
+            {[
+              ["Police Head",  "head@hossanapolice.gov.et",  "head123"],
+              ["Detective",    "abebe.girma@hossanapolice.gov.et", "det123"],
+              ["HR",           "almaz.bekele@hossanapolice.gov.et","hr123"],
+              ["Preventive",   "meron.tadesse@hossanapolice.gov.et","prev123"],
+              ["Traffic",      "kebede.alemu@hossanapolice.gov.et","traffic123"],
+              ["System Admin", "admin@hossanapolice.gov.et", "admin123"],
+            ].map(([role, em, pw]) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => { setEmail(em); setPassword(pw); setError(""); }}
+                className="flex w-full items-center gap-2 py-0.5 hover:text-white transition-colors text-purple-300/80"
+              >
+                <span className="font-semibold w-24 shrink-0 text-left">{role}</span>
+                <span className="opacity-60 truncate">{em}</span>
+                <span className="ml-auto font-mono text-purple-400 shrink-0">{pw}</span>
+              </button>
+            ))}
+          </div>
         </form>
       </motion.div>
 

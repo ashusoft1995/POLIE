@@ -23,6 +23,7 @@ export default function DetectiveLayout({ children }: { children: React.ReactNod
   return (
     <DashboardShell navItems={navItems} roleLabel="Detective" userName="Det. Abebe Girma"
       userRole="Detective Sergeant" profileHref="/detective/profile"
+      settingsHref="/detective/settings"
       metaMap={metaMap} fallbackMeta={{ title:"Detective", breadcrumb:["Detective"] }}>
       {children}
     </DashboardShell>

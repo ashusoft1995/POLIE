@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Search, Plus, Eye, X, AlertTriangle } from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
-import ToastContainer, { ToastMessage, useAutoDismiss } from "@/components/ui/Toast";
+import ToastContainer, { ToastMessage, useAutoDismiss } from "@/components/ui/toast";
 import { mockMissingPersons } from "@/lib/mock-data/cases";
 
 export default function MissingPersonsPage() {

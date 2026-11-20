@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Search, Filter, Plus, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import ToastContainer, { ToastMessage, useAutoDismiss } from "@/components/ui/Toast";
+import ToastContainer, { ToastMessage, useAutoDismiss } from "@/components/ui/toast";
 import ScrollReveal, { StaggerParent, StaggerChild } from "@/components/ui/ScrollReveal";
 import NewCaseForm from "@/components/dashboard/NewCaseForm";
 import { mockCases } from "@/lib/mock-data/cases";

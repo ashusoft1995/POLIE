@@ -23,6 +23,7 @@ export default function PreventiveLayout({ children }: { children: React.ReactNo
   return (
     <DashboardShell navItems={navItems} roleLabel="Preventive Police" userName="Off. Meron Tadesse"
       userRole="Police Officer I" profileHref="/preventive/profile"
+      settingsHref="/preventive/settings"
       metaMap={metaMap} fallbackMeta={{ title:"Preventive Police", breadcrumb:["Preventive Police"] }}>
       {children}
     </DashboardShell>
