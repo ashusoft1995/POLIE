@@ -52,7 +52,8 @@ export default function NominationPage() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8080/api/nominations", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+      const response = await fetch(`${apiUrl}/api/nominations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)

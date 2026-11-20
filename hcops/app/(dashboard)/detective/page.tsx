@@ -12,7 +12,8 @@ export default function DetectiveDashboard() {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    fetch("http://localhost:8080/api/crime-reports/status/PENDING")
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    fetch(`${apiUrl}/api/crime-reports/status/PENDING`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
