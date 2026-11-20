@@ -128,11 +128,11 @@ export const mockMissingPersons: MissingPerson[] = [
 ];
 
 export const mockActivityLog: ActivityLog[] = [
-  { id: "A1", user: "Chief Habtamu Woldemariam", action: "Approved closure", target: "Case TRK-2024-006", timestamp: "2024-11-27 09:14", type: "approve" },
+  { id: "A1", user: "Head Habtamu Woldemariam", action: "Approved closure", target: "Case TRK-2024-006", timestamp: "2024-11-27 09:14", type: "approve" },
   { id: "A2", user: "Det. Abebe Girma", action: "Added evidence", target: "Case TRK-2024-001", timestamp: "2024-11-26 15:30", type: "update" },
   { id: "A3", user: "Det. Tigist Mekonnen", action: "Requested closure", target: "Case TRK-2024-003", timestamp: "2024-11-25 11:05", type: "close" },
   { id: "A4", user: "Off. Meron Tadesse", action: "Registered new criminal record", target: "CR-2024-089", timestamp: "2024-11-24 08:50", type: "create" },
-  { id: "A5", user: "Chief Habtamu Woldemariam", action: "Assigned detective", target: "Case TRK-2024-004", timestamp: "2024-11-23 10:00", type: "update" },
+  { id: "A5", user: "Head Habtamu Woldemariam", action: "Assigned detective", target: "Case TRK-2024-004", timestamp: "2024-11-23 10:00", type: "update" },
   { id: "A6", user: "Traffic Off. Kebede Alemu", action: "Filed accident report", target: "ACC-2024-033", timestamp: "2024-11-22 16:45", type: "create" },
 ];
 

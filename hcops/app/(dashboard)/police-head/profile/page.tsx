@@ -6,13 +6,13 @@ import ToastContainer, { ToastMessage, useAutoDismiss } from "@/components/ui/To
 
 const initialProfile = {
   name:       "Habtamu Woldemariam",
-  email:      "chief@hossanapolice.gov.et",
+  email:      "head@hossanapolice.gov.et",
   phone:      "+251 912 345 678",
   badge:      "PHD-001",
-  rank:       "Chief of Police",
+  rank:       "Head of Police",
   department: "Command Division",
   location:   "Hossana City, Hadiya Zone",
-  bio:        "Chief of Police with over 20 years of service in the Hossana City Police Force. Committed to community safety and professional law enforcement.",
+  bio:        "Head of Police with over 20 years of service in the Hossana City Police Force. Committed to community safety and professional law enforcement.",
 };
 
 export default function ProfilePage() {

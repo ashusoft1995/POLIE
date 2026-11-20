@@ -77,7 +77,7 @@ export default function PoliceHeadDashboard() {
             <div>
               <p className="text-green-200 text-sm font-medium tracking-wide">{tr.goodMorning},</p>
               <h2 className="text-xl font-extrabold mt-1 leading-tight">
-                Chief Habtamu Woldemariam
+                Head Habtamu Woldemariam
               </h2>
               <p className="text-green-100 text-sm mt-1.5">
                 {dateStr}

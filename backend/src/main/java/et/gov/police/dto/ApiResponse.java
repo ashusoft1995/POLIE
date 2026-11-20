@@ -25,6 +25,19 @@ public class ApiResponse<T> {
         return new ApiResponse<>(false, message, null);
     }
 
+    // Aliases for consistency across controllers
+    public static <T> ApiResponse<T> success(String message, T data) {
+        return ok(message, data);
+    }
+
+    public static <T> ApiResponse<T> success(String message) {
+        return ok(message);
+    }
+
+    public static <T> ApiResponse<T> error(String message) {
+        return fail(message);
+    }
+
     public boolean isSuccess() { return success; }
     public String  getMessage(){ return message; }
     public T       getData()   { return data; }

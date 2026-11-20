@@ -17,7 +17,7 @@ export const mockLeaveRequests = [
 ];
 
 export const mockPayroll = [
-  { id:"P001", officer:"Chief Habtamu Woldemariam", badge:"PHD-001", rank:"Chief of Police",     basic:18500, allowance:4200, deduction:1800, net:20900 },
+  { id:"P001", officer:"Head Habtamu Woldemariam", badge:"PHD-001", rank:"Head of Police",     basic:18500, allowance:4200, deduction:1800, net:20900 },
   { id:"P002", officer:"Det. Abebe Girma",          badge:"DET-012", rank:"Detective Sergeant",  basic:12000, allowance:2800, deduction:1200, net:13600 },
   { id:"P003", officer:"Off. Meron Tadesse",        badge:"PRV-021", rank:"Police Officer I",    basic:8500,  allowance:1800, deduction:850,  net:9450  },
   { id:"P004", officer:"Off. Kebede Alemu",         badge:"TRF-033", rank:"Traffic Officer",     basic:9000,  allowance:2000, deduction:900,  net:10100 },

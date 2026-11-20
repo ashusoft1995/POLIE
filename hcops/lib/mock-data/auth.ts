@@ -15,13 +15,13 @@ export interface MockUser {
 export const mockUsers: MockUser[] = [
   {
     id: "U001",
-    name: "Chief Habtamu Woldemariam",
+    name: "Head Habtamu Woldemariam",
     badge: "PHD-001",
     role: "police-head",
-    rank: "Chief of Police",
+    rank: "Head of Police",
     department: "Command",
-    email: "chief@hossanapolice.gov.et",
-    password: "chief123",
+    email: "head@hossanapolice.gov.et",
+    password: "head123",
   },
   {
     id: "U002",

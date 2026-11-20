@@ -34,10 +34,10 @@ public class DataSeeder implements CommandLineRunner {
         log.info("Seeding initial police officers...");
 
         List<User> users = List.of(
-            User.builder().username("chief").email("chief@hossanapolice.gov.et")
-                .password(passwordEncoder.encode("chief123"))
-                .fullName("Chief Habtamu Woldemariam").role(Role.POLICE_HEAD)
-                .badge("PHD-001").rank("Chief of Police").build(),
+            User.builder().username("head").email("head@hossanapolice.gov.et")
+                .password(passwordEncoder.encode("head123"))
+                .fullName("Head Habtamu Woldemariam").role(Role.POLICE_HEAD)
+                .badge("PHD-001").rank("Head of Police").build(),
 
             User.builder().username("detective").email("detective@hossanapolice.gov.et")
                 .password(passwordEncoder.encode("detective123"))

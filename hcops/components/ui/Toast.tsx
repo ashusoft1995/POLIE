@@ -1,78 +1,70 @@
 "use client";
-import { useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, XCircle, Info, X } from "lucide-react";
+import { createContext, useContext, useState, ReactNode } from "react";
+import { X, CheckCircle, AlertCircle, Info } from "lucide-react";
 
-export type ToastType = "success" | "error" | "info";
+type ToastType = "success" | "error" | "info";
 
-export interface ToastMessage {
+interface Toast {
   id: string;
-  type: ToastType;
   message: string;
+  type: ToastType;
 }
 
-interface Props {
-  toasts: ToastMessage[];
-  onRemove: (id: string) => void;
+interface ToastContextType {
+  showToast: (message: string, type: ToastType) => void;
 }
 
-const icons = { success: CheckCircle, error: XCircle, info: Info };
-const colors = {
-  success: "bg-green-50 border-green-200 text-green-800",
-  error:   "bg-red-50 border-red-200 text-red-800",
-  info:    "bg-blue-50 border-blue-200 text-blue-800",
-};
-const iconColors = {
-  success: "text-green-600",
-  error:   "text-red-600",
-  info:    "text-blue-600",
-};
+const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-export default function ToastContainer({ toasts, onRemove }: Props) {
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const showToast = (message: string, type: ToastType) => {
+    const id = Date.now().toString();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 5000);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
   return (
-    <div
-      aria-live="polite"
-      className="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 w-80"
-    >
-      <AnimatePresence>
-        {toasts.map((t) => {
-          const Icon = icons[t.type];
-          return (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              transition={{ duration: 0.25 }}
-              className={`flex items-start gap-3 p-3 rounded-xl border shadow-lg ${colors[t.type]}`}
+    <ToastContext.Provider value={{ showToast }}>
+      {children}
+      <div className="fixed top-4 right-4 z-[9999] space-y-2 max-w-sm w-full">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`flex items-center gap-3 p-4 rounded-xl shadow-2xl border backdrop-blur-sm animate-slideInRight ${
+              toast.type === "success"
+                ? "bg-green-50 border-green-200 text-green-800"
+                : toast.type === "error"
+                ? "bg-red-50 border-red-200 text-red-800"
+                : "bg-blue-50 border-blue-200 text-blue-800"
+            }`}
+          >
+            {toast.type === "success" && <CheckCircle className="w-5 h-5 flex-shrink-0" />}
+            {toast.type === "error" && <AlertCircle className="w-5 h-5 flex-shrink-0" />}
+            {toast.type === "info" && <Info className="w-5 h-5 flex-shrink-0" />}
+            <p className="flex-1 text-sm font-medium">{toast.message}</p>
+            <button
+              onClick={() => removeToast(toast.id)}
+              className="hover:opacity-70 transition-opacity"
             >
-              <Icon size={18} className={`mt-0.5 shrink-0 ${iconColors[t.type]}`} />
-              <p className="text-sm flex-1 font-medium">{t.message}</p>
-              <button
-                onClick={() => onRemove(t.id)}
-                aria-label="Dismiss notification"
-                className="shrink-0 opacity-60 hover:opacity-100 transition-opacity"
-              >
-                <X size={15} />
-              </button>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
-    </div>
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </ToastContext.Provider>
   );
 }
 
-/** Auto-dismiss helper */
-export function useAutoDismiss(
-  toasts: ToastMessage[],
-  onRemove: (id: string) => void,
-  delay = 4000
-) {
-  useEffect(() => {
-    if (!toasts.length) return;
-    const id = toasts[toasts.length - 1].id;
-    const t = setTimeout(() => onRemove(id), delay);
-    return () => clearTimeout(t);
-  }, [toasts, onRemove, delay]);
+export function useToast() {
+  const context = useContext(ToastContext);
+  if (!context) throw new Error("useToast must be used within ToastProvider");
+  return context;
 }

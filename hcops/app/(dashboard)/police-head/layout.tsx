@@ -37,8 +37,8 @@ export default function PoliceHeadLayout({ children }: { children: React.ReactNo
     <DashboardShell
       navItems={navItems}
       roleLabel={tr.policeHead}
-      userName="Chief Habtamu Woldemariam"
-      userRole={tr.chiefOfPolice}
+      userName="Head Habtamu Woldemariam"
+      userRole={tr.headOfPolice}
       profileHref="/police-head/profile"
       metaMap={metaMap}
       fallbackMeta={{ title: "Police Head", breadcrumb: ["Police Head"] }}

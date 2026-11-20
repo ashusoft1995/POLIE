@@ -82,7 +82,7 @@ spring.datasource.password=your_password
 
 | Role | Username | Password |
 |------|----------|----------|
-| Police Head | chief | chief123 |
+| Police Head | head | head123 |
 | Detective | detective | detective123 |
 | Traffic Officer | traffic | traffic123 |
 | HR Manager | hr | hr123 |
