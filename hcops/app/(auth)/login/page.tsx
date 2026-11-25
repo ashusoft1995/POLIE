@@ -1,18 +1,13 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Eye,
-  EyeOff,
-  AlertCircle,
-  X,
-  Mail,
-  ArrowLeft,
-  CheckCircle,
+  Eye, EyeOff, AlertCircle, X, Mail, ArrowLeft, CheckCircle, Clock,
 } from "lucide-react";
 import { loginApi, roleDashboardMap, forgotPasswordApi } from "@/lib/api";
 import { mockUsers, roleRedirectMap } from "@/lib/mock-data/auth";
+import { saveSession, saveCitizenSession, isSessionAlive } from "@/lib/session";
 
 const glassInput =
   "w-full h-11 px-4 text-sm text-white rounded-xl outline-none transition-all";
@@ -270,6 +265,22 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
+
+  // If already logged in, skip the login page entirely
+  useEffect(() => {
+    if (isSessionAlive()) {
+      const user = JSON.parse(sessionStorage.getItem("hcops_user") ?? "{}");
+      const dest = roleDashboardMap[user.role] ?? "/";
+      router.replace(dest);
+    }
+  }, [router]);
+
+  // Show "session expired" banner if middleware redirected here with ?next=
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("next")) setSessionExpired(true);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -283,15 +294,15 @@ export default function LoginPage() {
       const res = await loginApi({ identifier: email.trim(), password });
       if (res.success && res.data) {
         const { accessToken, refreshToken, user } = res.data;
-        sessionStorage.setItem("hcops_token", accessToken);
-        sessionStorage.setItem("hcops_refresh", refreshToken);
-        sessionStorage.setItem("hcops_user", JSON.stringify(user));
-        router.push(roleDashboardMap[user.role] ?? "/");
+        // saveSession writes both sessionStorage AND cookies (for middleware)
+        saveSession(accessToken, refreshToken, user);
+        // replace = login page removed from history → back button can't return here
+        router.replace(roleDashboardMap[user.role] ?? "/");
         return;
       }
       setError(res.message || "Invalid username or password.");
     } catch {
-      // Backend unreachable — try local accounts
+      // Backend unreachable — try local mock accounts
       const id = email.trim().toLowerCase();
       const found = mockUsers.find(
         (u) =>
@@ -299,9 +310,8 @@ export default function LoginPage() {
           u.password === password,
       );
       if (found) {
-        sessionStorage.setItem("hcops_user", JSON.stringify(found));
-        sessionStorage.setItem("hcops_token", "session-token");
-        router.push(roleRedirectMap[found.role] ?? "/");
+        saveSession("session-token", "", found);
+        router.replace(roleRedirectMap[found.role] ?? "/");
         return;
       }
       setError("Invalid username or password.");
@@ -364,6 +374,25 @@ export default function LoginPage() {
             Use your official credentials
           </p>
         </div>
+
+        {/* Session expired banner */}
+        <AnimatePresence>
+          {sessionExpired && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-[11px] text-amber-300 mb-2"
+              style={{
+                background: "rgba(217,119,6,0.15)",
+                border: "1px solid rgba(217,119,6,0.3)",
+              }}
+            >
+              <Clock size={13} className="shrink-0" />
+              Your session expired. Please sign in again.
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
           {/* Email / Username */}
@@ -471,16 +500,8 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => {
-                sessionStorage.setItem("hcops_token", "citizen");
-                sessionStorage.setItem(
-                  "hcops_user",
-                  JSON.stringify({
-                    role: "citizen",
-                    name: "Citizen",
-                    email: "",
-                  }),
-                );
-                router.push("/citizen");
+                saveCitizenSession();
+                router.replace("/citizen");
               }}
               className="text-[11px] text-purple-300 hover:text-white underline underline-offset-2 transition-colors mt-0.5"
             >

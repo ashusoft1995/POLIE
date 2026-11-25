@@ -1,39 +1,55 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, Plus, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, X, Filter } from "lucide-react";
+import { Search, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, X, RefreshCw } from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import ToastContainer, { ToastMessage, useAutoDismiss } from "@/components/ui/toast";
+import ToastContainer, { ToastMessage } from "@/components/ui/toast";
+import { employeeApi } from "@/lib/api-client";
 
-const mockOfficers = [
-  { id: "O001", name: "Det. Abebe Girma",     badge: "DET-012", rank: "Detective Sergeant",  department: "CID",         status: "Active" as const,   joined: "2018-03-15" },
-  { id: "O002", name: "Off. Meron Tadesse",   badge: "PRV-021", rank: "Police Officer I",     department: "Preventive",  status: "Active" as const,   joined: "2020-07-01" },
-  { id: "O003", name: "Off. Kebede Alemu",    badge: "TRF-033", rank: "Traffic Officer",      department: "Traffic",     status: "Active" as const,   joined: "2019-11-20" },
-  { id: "O004", name: "Sgt. Lemlem Haile",    badge: "DET-018", rank: "Detective Constable",  department: "CID",         status: "Active" as const,   joined: "2017-05-10" },
-  { id: "O005", name: "Off. Dawit Bekele",    badge: "PRV-029", rank: "Police Officer II",    department: "Preventive",  status: "On Leave" as const, joined: "2021-02-14" },
-  { id: "O006", name: "Insp. Almaz Worku",    badge: "PRV-005", rank: "Inspector",            department: "Preventive",  status: "Active" as const,   joined: "2015-09-08" },
-  { id: "O007", name: "Off. Yonas Tesfaye",   badge: "TRF-041", rank: "Traffic Officer",      department: "Traffic",     status: "Suspended" as const,joined: "2022-01-30" },
-  { id: "O008", name: "Det. Tigist Mekonnen", badge: "DET-022", rank: "Detective Sergeant",   department: "CID",         status: "Active" as const,   joined: "2016-06-25" },
+const MOCK_OFFICERS = [
+  { id:"O001", name:"Det. Abebe Girma",     badge:"DET-012", rank:"Detective Sergeant", department:"CID",        status:"Active",    joined:"2018-03-15" },
+  { id:"O002", name:"Off. Meron Tadesse",   badge:"PRV-021", rank:"Police Officer I",   department:"Preventive", status:"Active",    joined:"2020-07-01" },
+  { id:"O003", name:"Off. Kebede Alemu",    badge:"TRF-033", rank:"Traffic Officer",    department:"Traffic",    status:"Active",    joined:"2019-11-20" },
+  { id:"O004", name:"Sgt. Lemlem Haile",    badge:"DET-018", rank:"Detective Constable",department:"CID",        status:"Active",    joined:"2017-05-10" },
+  { id:"O005", name:"Off. Dawit Bekele",    badge:"PRV-029", rank:"Police Officer II",  department:"Preventive", status:"On Leave",  joined:"2021-02-14" },
+  { id:"O006", name:"Insp. Almaz Worku",    badge:"HR-005",  rank:"HR Inspector",       department:"HR",         status:"Active",    joined:"2015-09-08" },
+  { id:"O007", name:"Off. Yonas Tesfaye",   badge:"TRF-041", rank:"Traffic Officer",    department:"Traffic",    status:"Suspended", joined:"2022-01-30" },
+  { id:"O008", name:"Det. Tigist Mekonnen", badge:"DET-022", rank:"Detective Sergeant", department:"CID",        status:"Active",    joined:"2016-06-25" },
 ];
-
 const PAGE_SIZE = 5;
 
 export default function OfficersPage() {
-  const [officers, setOfficers] = useState(mockOfficers);
-  const [search, setSearch] = useState("");
-  const [deptFilter, setDeptFilter] = useState("All");
+  const [officers, setOfficers] = useState(MOCK_OFFICERS);
+  const [loading, setLoading]   = useState(true);
+  const [search, setSearch]     = useState("");
+  const [deptFilter, setDeptFilter]   = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [page, setPage] = useState(1);
-  const [toDeleteId, setToDeleteId] = useState<string | null>(null);
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [viewOfficer, setViewOfficer] = useState<typeof mockOfficers[0] | null>(null);
+  const [page, setPage]         = useState(1);
+  const [toDeleteId, setToDeleteId] = useState<string|null>(null);
+  const [toasts, setToasts]     = useState<ToastMessage[]>([]);
+  const [viewOfficer, setViewOfficer] = useState<any|null>(null);
 
-  const addToast = useCallback((type: ToastMessage["type"], msg: string) => {
-    setToasts((t) => [...t, { id: Date.now().toString(), type, message: msg }]);
+  const addToast = useCallback((type: ToastMessage["type"], message: string) =>
+    setToasts(t => [...t, { id:`${Date.now()}-${Math.random()}`, type, message }]), []);
+  const removeToast = useCallback((id: string) =>
+    setToasts(t => t.filter(x => x.id !== id)), []);
+
+  const fetchOfficers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await employeeApi.getAll();
+      setOfficers(data.map((o: any) => ({
+        id: String(o.id), name: o.fullName, badge: o.badge||o.badgeNumber||"",
+        rank: o.rank||"", department: o.role?.replace(/_/g," ")||"",
+        status: o.enabled!==false ? "Active" : "Inactive",
+        joined: (o.createdAt||"").split("T")[0],
+      })));
+    } catch { setOfficers(MOCK_OFFICERS); }
+    finally { setLoading(false); }
   }, []);
-  const removeToast = useCallback((id: string) => setToasts((t) => t.filter((x) => x.id !== id)), []);
-  useAutoDismiss(toasts, removeToast);
+
+  useEffect(() => { fetchOfficers(); }, [fetchOfficers]);
 
   const filtered = officers.filter((o) => {
     const q = search.toLowerCase();
@@ -56,9 +72,7 @@ export default function OfficersPage() {
             <h2 className="text-xl font-bold text-[var(--navy)]">Officer Overview</h2>
             <p className="text-sm text-[var(--slate)] mt-0.5">All active and assigned officers under your command.</p>
           </div>
-          <button onClick={() => addToast("info", "Register Officer form — available in HR module.")} className="btn-primary">
-            <Plus size={15} /> Add Officer
-          </button>
+          <button onClick={fetchOfficers} className="p-2 rounded-xl border border-[var(--border)] text-[var(--slate)] hover:bg-[var(--surface2)] transition-colors"><RefreshCw size={15}/></button>
         </div>
 
         {/* Stats row */}
@@ -87,7 +101,6 @@ export default function OfficersPage() {
             {search && <button onClick={() => setSearch("")}><X size={13} className="text-[var(--muted)]" /></button>}
           </div>
           <div className="flex items-center gap-2 border border-[var(--border)] rounded-xl px-3 h-10 bg-[var(--card-bg)]">
-            <Filter size={13} className="text-[var(--muted)]" />
             <select value={deptFilter} onChange={(e) => { setDeptFilter(e.target.value); setPage(1); }}
               className="text-sm text-[var(--navy)] bg-transparent outline-none">
               <option value="All">All Departments</option>
@@ -95,7 +108,6 @@ export default function OfficersPage() {
             </select>
           </div>
           <div className="flex items-center gap-2 border border-[var(--border)] rounded-xl px-3 h-10 bg-[var(--card-bg)]">
-            <Filter size={13} className="text-[var(--muted)]" />
             <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
               className="text-sm text-[var(--navy)] bg-transparent outline-none">
               <option value="All">All Statuses</option>
@@ -171,14 +183,14 @@ export default function OfficersPage() {
             <button onClick={() => setViewOfficer(null)} className="absolute top-4 right-4 text-[var(--muted)] hover:text-[var(--navy)]"><X size={18}/></button>
             <div className="flex flex-col items-center text-center mb-5">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--green)] to-[var(--green-dark)] flex items-center justify-center text-white text-xl font-bold mb-3 shadow-lg">
-                {viewOfficer.name.split(" ").map(n=>n[0]).slice(0,2).join("")}
+                {viewOfficer.name.split(" ").map((n: string)=>n[0]).slice(0,2).join("")}
               </div>
               <h3 className="text-base font-bold text-[var(--navy)]">{viewOfficer.name}</h3>
               <p className="text-sm text-[var(--slate)]">{viewOfficer.rank}</p>
               <div className="mt-2"><StatusBadge label={viewOfficer.status} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              {[["Badge", viewOfficer.badge],["Department", viewOfficer.department],["Joined", viewOfficer.joined]].map(([l,v])=>(
+              {([["Badge", viewOfficer.badge],["Department", viewOfficer.department],["Joined", viewOfficer.joined]] as [string,string][]).map(([l,v])=>(
                 <div key={l} className="bg-[var(--surface2)] rounded-xl p-3">
                   <p className="text-xs text-[var(--muted)] mb-0.5">{l}</p>
                   <p className="font-semibold text-[var(--navy)]">{v}</p>

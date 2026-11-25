@@ -1,0 +1,11 @@
+{
+  "name": "polie-dev",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "powershell -ExecutionPolicy Bypass -File dev.ps1",
+    "frontend": "cd hcops && npm run dev",
+    "backend": "java -jar backend/target/hossana-police-backend-1.0.0.jar",
+    "build:backend": "powershell -ExecutionPolicy Bypass -File build-backend.ps1"
+  }
+}

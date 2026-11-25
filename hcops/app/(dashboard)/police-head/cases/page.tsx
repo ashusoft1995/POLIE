@@ -59,7 +59,10 @@ export default function CasesPage() {
       await casesApi.create({
         title: caseData.title, caseType: caseData.crimeType?.toUpperCase().replace(/ /g,"_"),
         description: (caseData as any).description ?? "New case", location: caseData.location,
-        priority: caseData.priority?.toUpperCase(), assignedDetectiveId: 2,
+        priority: caseData.priority?.toUpperCase(),
+        assignedDetectiveId: (caseData as any).assignedDetectiveId
+          ?? JSON.parse(sessionStorage.getItem("hcops_user") || "{}").id
+          ?? 2,
       });
       addToast("success", `Case ${caseData.trackingId} created successfully.`);
       await fetchCases();
@@ -148,9 +151,9 @@ export default function CasesPage() {
                     <td className="px-4 py-3 whitespace-nowrap"><StatusBadge label={c.priority}/></td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => setViewCase(c)} className="p-1.5 rounded-lg text-[var(--slate)] hover:text-[var(--green)] hover:bg-green-50 transition-colors"><Eye size={15}/></button>
-                        <button onClick={() => addToast("info","Edit coming soon.")} className="p-1.5 rounded-lg text-[var(--slate)] hover:text-amber-500 hover:bg-amber-50 transition-colors"><Pencil size={15}/></button>
-                        <button onClick={() => setToDeleteId(c.id)} className="p-1.5 rounded-lg text-[var(--slate)] hover:text-red-500 hover:bg-red-50 transition-colors"><Trash2 size={15}/></button>
+                        <button onClick={() => setViewCase(c)} className="action-btn action-btn-view" title="View"><Eye size={15}/></button>
+                        <button onClick={() => addToast("info","Edit coming soon.")} className="action-btn action-btn-edit" title="Edit"><Pencil size={15}/></button>
+                        <button onClick={() => setToDeleteId(c.id)} className="action-btn action-btn-delete" title="Delete"><Trash2 size={15}/></button>
                       </div>
                     </td>
                   </motion.tr>

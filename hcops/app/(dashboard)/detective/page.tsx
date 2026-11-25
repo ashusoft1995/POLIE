@@ -6,10 +6,15 @@ import KpiCard from "@/components/dashboard/KpiCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import ScrollReveal, { StaggerParent, StaggerChild } from "@/components/ui/ScrollReveal";
 import { useEffect, useState } from "react";
+import { useDashboardStats } from "@/lib/useDashboardStats";
+import { useSessionUser } from "@/lib/useSessionUser";
 
 export default function DetectiveDashboard() {
   const [crimeReports, setCrimeReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const stats = useDashboardStats();
+  const user  = useSessionUser();
+  const displayName = user?.fullName ?? user?.name ?? "Det. Abebe Girma";
   
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -39,7 +44,7 @@ export default function DetectiveDashboard() {
           <div className="pointer-events-none absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/5" />
           <div className="relative">
             <p className="text-blue-200 text-sm font-medium">Welcome back,</p>
-            <h2 className="text-xl font-extrabold mt-1">Det. Abebe Girma</h2>
+            <h2 className="text-xl font-extrabold mt-1">{displayName}</h2>
             <p className="text-blue-100 text-sm mt-1.5">
               {dateStr}
               {" · "}Criminal Investigation Department
@@ -50,10 +55,10 @@ export default function DetectiveDashboard() {
 
       <StaggerParent className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label:"Pending Reports",    value:crimeReports.length,                                         trend:"up"      as const, trendValue:"Need review",       icon:AlertCircle, color:"pink"   as const },
-          { label:"Urgent Cases",       value:crimeReports.filter(r=>r.isUrgent).length,                  trend:"neutral" as const, trendValue:"Requires attention",icon:FolderOpen,  color:"yellow" as const },
-          { label:"This Week",          value:crimeReports.filter(r=>new Date(r.submittedAt).getTime() > Date.now() - 7*24*60*60*1000).length, trend:"up" as const, trendValue:"New reports", icon:FileText, color:"green" as const },
-          { label:"Total Reports",      value:crimeReports.length,                                         trend:"up"      as const, trendValue:"All time",          icon:FileText,    color:"blue"   as const },
+          { label:"Pending Reports",    value: stats.pendingReports || crimeReports.length,              trend:"up"      as const, trendValue:"Need review",        icon:AlertCircle, color:"pink"   as const },
+          { label:"Urgent Cases",       value: stats.urgentReports  || crimeReports.filter(r=>r.isUrgent).length, trend:"neutral" as const, trendValue:"Requires attention", icon:FolderOpen, color:"yellow" as const },
+          { label:"Open Investigations",value: stats.openCases,                                          trend:"up"      as const, trendValue:"Active cases",       icon:FileText,    color:"green"  as const },
+          { label:"Pending Court",      value: stats.pendingCourt,                                       trend:"neutral" as const, trendValue:"Awaiting hearing",   icon:CheckSquare, color:"blue"   as const },
         ].map((k,i)=><StaggerChild key={k.label}><KpiCard {...k} delay={i*0.08}/></StaggerChild>)}
       </StaggerParent>
 

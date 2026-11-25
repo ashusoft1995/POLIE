@@ -143,23 +143,24 @@ export default function NominationsPage() {
         )}
       </div>
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Submit Nomination" size="sm" accent="blue">
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Nominate an Officer" size="sm" accent="blue">
         <form onSubmit={handleSubmit} noValidate className="space-y-3">
-          <FormField label="Officer Name" required id="nomSus" type="text" placeholder="Min 4 letters"
+          <FormField label="Officer Name" required id="nomSus" type="text" placeholder="Officer's full name (min 4 letters)"
             value={form.suspect} onChange={e=>set("suspect",(e.target as HTMLInputElement).value)} error={errors.suspect}/>
+          <FormField label="Category / Achievement" required id="nomCrime" type="text" placeholder="e.g. Bravery, Community Service"
+            value={form.crime} onChange={e=>set("crime",(e.target as HTMLInputElement).value)} error={errors.crime}/>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Crime / Incident" required id="nomCrime" type="text"
-              value={form.crime} onChange={e=>set("crime",(e.target as HTMLInputElement).value)} error={errors.crime}/>
-            <FormField label="Location" required id="nomLoc" type="text"
+            <FormField label="Incident Location" required id="nomLoc" type="text" placeholder="Where it happened"
               value={form.location} onChange={e=>set("location",(e.target as HTMLInputElement).value)} error={errors.location}/>
-            <FormField label="Date" required id="nomDate" type="date" as="input"
+            <FormField label="Date of Incident" required id="nomDate" type="date" as="input"
               value={form.date} onChange={e=>set("date",(e.target as HTMLInputElement).value)} error={errors.date}/>
-            <FormField label="Priority" required as="select" id="nomPri"
+            <FormField label="Recommendation Level" required as="select" id="nomPri"
               value={form.priority} onChange={e=>set("priority",e.target.value)}>
               <option>High</option><option>Medium</option><option>Low</option>
             </FormField>
           </div>
-          <FormField label="Notes (optional)" as="textarea" id="nomNotes" rows={3}
+          <FormField label="Reason for Nomination" as="textarea" id="nomNotes" rows={3}
+            placeholder="Describe the officer's outstanding action…"
             value={form.notes} onChange={e=>set("notes",(e.target as HTMLTextAreaElement).value)} error={errors.notes}/>
           <div className="flex gap-2 pt-2 border-t border-[var(--border)]">
             <button type="button" onClick={() => setModalOpen(false)} className="flex-1 px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--slate)] hover:bg-[var(--surface2)] transition-colors">Cancel</button>

@@ -7,6 +7,8 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import ScrollReveal, { StaggerParent, StaggerChild } from "@/components/ui/ScrollReveal";
 import { mockAccidents } from "@/lib/mock-data/criminals";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useDashboardStats } from "@/lib/useDashboardStats";
+import { useSessionUser } from "@/lib/useSessionUser";
 
 const weeklyData = [
   { day:"Mon", accidents:2 }, { day:"Tue", accidents:1 }, { day:"Wed", accidents:3 },
@@ -15,6 +17,9 @@ const weeklyData = [
 
 export default function TrafficDashboard() {
   const dateStr = useDateString();
+  const stats   = useDashboardStats();
+  const user    = useSessionUser();
+  const displayName = user?.fullName ?? user?.name ?? "Off. Kebede Alemu";
   return (
     <div className="space-y-6 pb-10">
       <ScrollReveal variant="fadeDown">
@@ -23,7 +28,7 @@ export default function TrafficDashboard() {
           <div className="pointer-events-none absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/5"/>
           <div className="relative">
             <p className="text-yellow-100 text-sm font-medium">Welcome back,</p>
-            <h2 className="text-xl font-extrabold mt-1">Off. Kebede Alemu</h2>
+            <h2 className="text-xl font-extrabold mt-1">{displayName}</h2>
             <p className="text-yellow-100 text-sm mt-1.5">
               {dateStr}
               {" · "}Traffic Division
@@ -34,10 +39,10 @@ export default function TrafficDashboard() {
 
       <StaggerParent className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label:"Total Accidents",        value:mockAccidents.length,                                        trend:"up"      as const, trendValue:"This period",    icon:Car,           color:"blue"   as const },
-          { label:"Under Review",           value:mockAccidents.filter(a=>a.status==="Under Review").length,   trend:"neutral" as const, trendValue:"Pending review", icon:AlertTriangle, color:"yellow" as const },
-          { label:"Total Injuries",         value:mockAccidents.reduce((s,a)=>s+a.injuries,0),                 trend:"down"    as const, trendValue:"This period",    icon:AlertTriangle, color:"pink"   as const },
-          { label:"Fatalities",             value:mockAccidents.reduce((s,a)=>s+a.fatalities,0),               trend:"down"    as const, trendValue:"This period",    icon:AlertTriangle, color:"green"  as const },
+          { label:"Total Accidents",        value: stats.totalTraffic,                                         trend:"up"      as const, trendValue:"This period",    icon:Car,           color:"blue"   as const },
+          { label:"Under Review",           value: stats.pendingTraffic,                                       trend:"neutral" as const, trendValue:"Pending review", icon:AlertTriangle, color:"yellow" as const },
+          { label:"Total Injuries",         value: mockAccidents.reduce((s,a)=>s+a.injuries,0),               trend:"down"    as const, trendValue:"This period",    icon:AlertTriangle, color:"pink"   as const },
+          { label:"Fatalities",             value: mockAccidents.reduce((s,a)=>s+a.fatalities,0),             trend:"down"    as const, trendValue:"This period",    icon:AlertTriangle, color:"green"  as const },
         ].map((k,i)=><StaggerChild key={k.label}><KpiCard {...k} delay={i*0.08}/></StaggerChild>)}
       </StaggerParent>
 

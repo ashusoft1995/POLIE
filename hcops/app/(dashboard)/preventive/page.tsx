@@ -7,9 +7,14 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import ScrollReveal, { StaggerParent, StaggerChild } from "@/components/ui/ScrollReveal";
 import { mockCriminals } from "@/lib/mock-data/criminals";
 import { mockActivityLog } from "@/lib/mock-data/cases";
+import { useDashboardStats } from "@/lib/useDashboardStats";
+import { useSessionUser } from "@/lib/useSessionUser";
 
 export default function PreventiveDashboard() {
   const dateStr = useDateString();
+  const stats   = useDashboardStats();
+  const user    = useSessionUser();
+  const displayName = user?.fullName ?? user?.name ?? "Off. Meron Tadesse";
   return (
     <div className="space-y-6 pb-10">
       <ScrollReveal variant="fadeDown">
@@ -18,7 +23,7 @@ export default function PreventiveDashboard() {
           <div className="pointer-events-none absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/5"/>
           <div className="relative">
             <p className="text-orange-200 text-sm font-medium">Welcome back,</p>
-            <h2 className="text-xl font-extrabold mt-1">Off. Meron Tadesse</h2>
+            <h2 className="text-xl font-extrabold mt-1">{displayName}</h2>
             <p className="text-orange-100 text-sm mt-1.5">
               {dateStr}
               {" · "}Preventive Police Division
@@ -29,10 +34,10 @@ export default function PreventiveDashboard() {
 
       <StaggerParent className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label:"Total Criminals Registered", value:mockCriminals.length,                                trend:"up"      as const, trendValue:"+2 this month",   icon:Users,       color:"blue"   as const },
-          { label:"Convicted",                  value:mockCriminals.filter(c=>c.status==="Convicted").length,trend:"up"     as const, trendValue:"In database",     icon:AlertTriangle,color:"pink"  as const },
-          { label:"Arrested",                   value:mockCriminals.filter(c=>c.status==="Arrested").length, trend:"neutral" as const,trendValue:"Awaiting trial",  icon:Users,       color:"yellow" as const },
-          { label:"Crime Reports Generated",    value:8,                                                     trend:"up"      as const, trendValue:"This month",     icon:FileText,    color:"green"  as const },
+          { label:"Criminals Registered", value: stats.totalCases || mockCriminals.length,                             trend:"up"      as const, trendValue:"+2 this month", icon:Users,        color:"blue"   as const },
+          { label:"Convicted",            value: mockCriminals.filter(c=>c.status==="Convicted").length,               trend:"up"      as const, trendValue:"In database",    icon:AlertTriangle,color:"pink"   as const },
+          { label:"Arrested",             value: mockCriminals.filter(c=>c.status==="Arrested").length,                trend:"neutral" as const, trendValue:"Awaiting trial", icon:Users,        color:"yellow" as const },
+          { label:"Pending Reports",      value: stats.pendingReports,                                                 trend:"up"      as const, trendValue:"This month",     icon:FileText,     color:"green"  as const },
         ].map((k,i)=><StaggerChild key={k.label}><KpiCard {...k} delay={i*0.08}/></StaggerChild>)}
       </StaggerParent>
 

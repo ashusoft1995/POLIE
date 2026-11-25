@@ -92,4 +92,24 @@ public class CrimeReportService {
     public Long countByStatus(CrimeReport.ReportStatus status) {
         return crimeReportRepository.countByStatus(status);
     }
+
+    @Transactional
+    public CrimeReport approveReport(Long reportId, String notes) {
+        CrimeReport report = getReportById(reportId);
+        report.setStatus(CrimeReport.ReportStatus.UNDER_REVIEW);
+        if (notes != null && !notes.isBlank()) {
+            report.setOfficerNotes(notes);
+        }
+        return crimeReportRepository.save(report);
+    }
+
+    @Transactional
+    public CrimeReport rejectReport(Long reportId, String notes) {
+        CrimeReport report = getReportById(reportId);
+        report.setStatus(CrimeReport.ReportStatus.REJECTED);
+        if (notes != null && !notes.isBlank()) {
+            report.setOfficerNotes(notes);
+        }
+        return crimeReportRepository.save(report);
+    }
 }

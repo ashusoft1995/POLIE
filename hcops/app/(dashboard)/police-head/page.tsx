@@ -2,7 +2,7 @@
 import { useDateString } from "@/lib/useDateString";
 import {
   FolderOpen, CheckSquare, Users, AlertTriangle,
-  Clock, Eye, ArrowRight,
+  Clock, Eye, ArrowRight, FileSearch,
 } from "lucide-react";
 import Link from "next/link";
 import KpiCard from "@/components/dashboard/KpiCard";
@@ -19,6 +19,8 @@ import {
 } from "@/lib/mock-data/cases";
 import { useTheme } from "@/lib/theme-context";
 import { t } from "@/lib/i18n";
+import { useDashboardStats } from "@/lib/useDashboardStats";
+import { useSessionUser } from "@/lib/useSessionUser";
 
 function SectionHeading({
   title, sub, action,
@@ -40,16 +42,18 @@ export default function PoliceHeadDashboard() {
   const dateStr = useDateString();
   const { lang } = useTheme();
   const tr = t[lang];
+  const stats = useDashboardStats();
+  const user  = useSessionUser();
+  const displayName = user?.fullName ?? user?.name ?? "Head Habtamu Woldemariam";
 
   const pendingClosure = mockClosureRequests.filter((c) => c.status === "Pending");
   const recentCases    = mockCases.slice(0, 5);
 
   const kpis = [
-    { label: tr.totalActiveCases,  value: 42, trend: "up"      as const, trendValue: tr.thisWeek,     icon: FolderOpen,    color: "blue"   as const },
-    { label: tr.pendingClosure,    value: pendingClosure.length, trend: "neutral" as const, trendValue: tr.awaitingReview, icon: CheckSquare,  color: "yellow" as const },
-    { label: tr.officersOnDuty,    value: 38, trend: "up"      as const, trendValue: tr.fromLastShift, icon: Users,         color: "green"  as const },
-    { label: tr.highPriorityCases, value: mockCases.filter((c) => c.priority === "High" && c.status !== "Closed").length,
-      trend: "down" as const, trendValue: tr.fromYesterday, icon: AlertTriangle, color: "pink" as const },
+    { label: tr.totalActiveCases,  value: stats.openCases,    trend: "up"      as const, trendValue: tr.thisWeek,     icon: FolderOpen,    color: "blue"   as const },
+    { label: tr.pendingClosure,    value: stats.pendingCourt, trend: "neutral" as const, trendValue: tr.awaitingReview, icon: CheckSquare,  color: "yellow" as const },
+    { label: tr.officersOnDuty,    value: stats.activeEmployees, trend: "up"   as const, trendValue: tr.fromLastShift, icon: Users,         color: "green"  as const },
+    { label: tr.highPriorityCases, value: stats.pendingReports,  trend: "down" as const, trendValue: tr.fromYesterday, icon: AlertTriangle, color: "pink"   as const },
   ];
 
   const tickColor   = "var(--slate)";
@@ -77,25 +81,34 @@ export default function PoliceHeadDashboard() {
             <div>
               <p className="text-green-200 text-sm font-medium tracking-wide">{tr.goodMorning},</p>
               <h2 className="text-xl font-extrabold mt-1 leading-tight">
-                Head Habtamu Woldemariam
+                {displayName}
               </h2>
               <p className="text-green-100 text-sm mt-1.5">
                 {dateStr}
                 {" · "}{tr.hossanaPoliceStation}
               </p>
             </div>
-            <Link
-              href="/police-head/closure-review"
-              className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold px-4 py-2.5 rounded-2xl transition-colors shrink-0 self-start sm:self-center"
-            >
-              <CheckSquare size={15} />
-              {tr.reviewClosureRequests}
-              {pendingClosure.length > 0 && (
-                <span className="bg-[var(--yellow)] text-[#1E293B] text-[10px] font-black px-1.5 py-0.5 rounded-full ml-1">
-                  {pendingClosure.length}
-                </span>
-              )}
-            </Link>
+            <div className="flex flex-wrap gap-2 self-start sm:self-center">
+              <Link
+                href="/police-head/closure-review"
+                className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold px-4 py-2.5 rounded-2xl transition-colors"
+              >
+                <CheckSquare size={15} />
+                {tr.reviewClosureRequests}
+                {pendingClosure.length > 0 && (
+                  <span className="bg-[var(--yellow)] text-[#1E293B] text-[10px] font-black px-1.5 py-0.5 rounded-full ml-1">
+                    {pendingClosure.length}
+                  </span>
+                )}
+              </Link>
+              <Link
+                href="/police-head/crime-reports"
+                className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold px-4 py-2.5 rounded-2xl transition-colors"
+              >
+                <FileSearch size={15} />
+                Crime Reports
+              </Link>
+            </div>
           </div>
         </div>
       </ScrollReveal>

@@ -9,6 +9,7 @@ const TIMEOUT = 5000;
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
+  // Read from sessionStorage (source of truth for JS)
   return sessionStorage.getItem("hcops_token");
 }
 
@@ -60,6 +61,7 @@ export const casesApi = {
   updateNotes:     (id: number, notes: string)     => api.put<any>(`/api/cases/${id}/notes`, notes),
   close:           (id: number, status: string, notes: string) => api.post<any>(`/api/cases/${id}/close?status=${status}`, notes),
   countByStatus:   (s: string)                     => api.get<number>(`/api/cases/stats/count/${s}`),
+  getById:         (id: number)                    => api.get<any>(`/api/cases/${id}`),
 };
 
 // Crime reports
@@ -67,7 +69,14 @@ export const crimeReportApi = {
   getAll:        ()             => api.get<any[]>("/api/crime-reports"),
   getByStatus:   (s: string)   => api.get<any[]>(`/api/crime-reports/status/${s}`),
   submit:        (body: any)   => api.post<any>("/api/crime-reports", body),
-  updateStatus:  (id: number, s: string) => api.put<any>(`/api/crime-reports/${id}/status?status=${s}`),
+  updateStatus:  (id: number, s: string, notes?: string) =>
+    api.put<any>(`/api/crime-reports/${id}/status?status=${s}${notes ? `&notes=${encodeURIComponent(notes)}` : ""}`),
+  approve:       (id: number, notes?: string) =>
+    api.post<any>(`/api/crime-reports/${id}/approve${notes ? `?notes=${encodeURIComponent(notes)}` : ""}`),
+  reject:        (id: number, notes?: string) =>
+    api.post<any>(`/api/crime-reports/${id}/reject${notes ? `?notes=${encodeURIComponent(notes)}` : ""}`),
+  assign:        (id: number, officerId: number) =>
+    api.post<any>(`/api/crime-reports/${id}/assign/${officerId}`),
 };
 
 // Employees / Users

@@ -4,6 +4,7 @@ import { Send, FileText, Scale, Users, AlertCircle } from "lucide-react";
 import Modal from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { validators } from "@/lib/validation";
+import { casesApi, courtReferralApi } from "@/lib/api-client";
 
 interface Case {
   id: number;
@@ -32,16 +33,15 @@ export default function CourtReferralsPage() {
 
   const fetchCases = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      const response = await fetch(`${apiUrl}/api/cases`, { signal: AbortSignal.timeout(3000) });
-      const result = await response.json();
-      if (result.success) {
-        const eligibleCases = result.data.filter(
-          (c: Case) => c.status === "UNDER_INVESTIGATION" || c.status === "PENDING_EVIDENCE"
-        );
-        setCases(eligibleCases);
-        return;
-      }
+      const user = JSON.parse(sessionStorage.getItem("hcops_user") || "{}");
+      const data = user.id
+        ? await casesApi.getByDetective(user.id)
+        : await casesApi.getAll();
+      const eligibleCases = (data as any[]).filter(
+        (c: any) => c.status === "UNDER_INVESTIGATION" || c.status === "PENDING_EVIDENCE"
+      );
+      setCases(eligibleCases);
+      return;
     } catch {}
     // Mock fallback
     setCases([
@@ -77,24 +77,15 @@ export default function CourtReferralsPage() {
     }
 
     setLoading(true);
-
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      const response = await fetch(`${apiUrl}/api/court-referrals?detectiveId=2`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-        signal: AbortSignal.timeout(4000),
-      });
-      const result = await response.json();
-      if (result.success) {
-        showToast(`Court referral submitted! Reference: ${result.data.referralNumber}`, "success");
-        setIsModalOpen(false);
-        setFormData({ caseId:"", investigationSummary:"", recommendedCharges:"", witnessDetails:"", evidenceSummary:"" });
-        fetchCases();
-        return;
-      }
-      throw new Error(result.message);
+      const user = JSON.parse(sessionStorage.getItem("hcops_user") || "{}");
+      const detectiveId = user.id ?? 2;
+      const result = await courtReferralApi.submit(formData, detectiveId);
+      showToast(`Court referral submitted! Reference: ${(result as any).referralNumber}`, "success");
+      setIsModalOpen(false);
+      setFormData({ caseId:"", investigationSummary:"", recommendedCharges:"", witnessDetails:"", evidenceSummary:"" });
+      fetchCases();
+      return;
     } catch {
       // Mock fallback
       const year = new Date().getFullYear();

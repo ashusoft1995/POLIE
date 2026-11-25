@@ -6,9 +6,14 @@ import KpiCard from "@/components/dashboard/KpiCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import ScrollReveal, { StaggerParent, StaggerChild } from "@/components/ui/ScrollReveal";
 import { mockOfficerList, mockLeaveRequests } from "@/lib/mock-data/officers";
+import { useDashboardStats } from "@/lib/useDashboardStats";
+import { useSessionUser } from "@/lib/useSessionUser";
 
 export default function HRDashboard() {
-  const dateStr = useDateString();
+  const dateStr  = useDateString();
+  const stats    = useDashboardStats();
+  const user     = useSessionUser();
+  const displayName = user?.fullName ?? user?.name ?? "Insp. Almaz Worku";
   return (
     <div className="space-y-6 pb-10">
       <ScrollReveal variant="fadeDown">
@@ -17,7 +22,7 @@ export default function HRDashboard() {
           <div className="pointer-events-none absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/5"/>
           <div className="relative">
             <p className="text-purple-200 text-sm font-medium">Welcome back,</p>
-            <h2 className="text-xl font-extrabold mt-1">Insp. Almaz Bekele</h2>
+            <h2 className="text-xl font-extrabold mt-1">{displayName}</h2>
             <p className="text-purple-100 text-sm mt-1.5">
               {dateStr}
               {" · "}Human Resources Department
@@ -28,10 +33,10 @@ export default function HRDashboard() {
 
       <StaggerParent className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label:"Total Officers",    value:mockOfficerList.length,                                      trend:"up"      as const, trendValue:"In system",         icon:Users,       color:"blue"   as const },
-          { label:"Active Officers",   value:mockOfficerList.filter(o=>o.status==="Active").length,       trend:"up"      as const, trendValue:"On duty",           icon:Users,       color:"green"  as const },
-          { label:"On Leave",          value:mockOfficerList.filter(o=>o.status==="On Leave").length,     trend:"neutral" as const, trendValue:"Currently away",    icon:CalendarDays,color:"yellow" as const },
-          { label:"Pending Leave Reqs",value:mockLeaveRequests.filter(l=>l.status==="Pending").length,   trend:"neutral" as const, trendValue:"Awaiting approval", icon:CheckCircle, color:"pink"   as const },
+          { label:"Total Officers",    value: stats.totalEmployees,  trend:"up"      as const, trendValue:"In system",         icon:Users,       color:"blue"   as const },
+          { label:"Active Officers",   value: stats.activeEmployees, trend:"up"      as const, trendValue:"On duty",           icon:Users,       color:"green"  as const },
+          { label:"On Leave",          value: mockOfficerList.filter(o=>o.status==="On Leave").length, trend:"neutral" as const, trendValue:"Currently away", icon:CalendarDays, color:"yellow" as const },
+          { label:"Pending Leave Reqs",value: stats.pendingLeave,    trend:"neutral" as const, trendValue:"Awaiting approval", icon:CheckCircle, color:"pink"   as const },
         ].map((k,i)=><StaggerChild key={k.label}><KpiCard {...k} delay={i*0.08}/></StaggerChild>)}
       </StaggerParent>
 

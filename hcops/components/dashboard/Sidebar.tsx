@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { clearSession } from "@/lib/session";
 
 export interface NavItem {
   labelKey: string;
@@ -53,41 +54,67 @@ function NavLink({
       title={collapsed ? item.label : undefined}
       className={`
         relative flex items-center gap-3 rounded-xl text-sm font-medium
-        transition-all duration-150 group select-none overflow-hidden
+        transition-all duration-200 group select-none overflow-hidden
         ${collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}
         ${
           active
-            ? "text-white shadow-md"
-            : "text-[var(--sidebar-text)] hover:shadow-md hover:shadow-black/20"
+            ? "text-white"
+            : "text-white/70 hover:text-white hover:bg-white/8"
         }
       `}
     >
+      {/* Filled background pill for active */}
       {active && (
         <motion.span
           layoutId="sidebar-active"
-          className="absolute inset-0 rounded-xl bg-[var(--green)]"
-          style={{ zIndex: -1 }}
-          transition={{ type: "spring", stiffness: 400, damping: 35 }}
+          className="absolute inset-0 rounded-xl bg-white/15"
+          style={{ zIndex: 0 }}
+          transition={{ type: "spring", stiffness: 420, damping: 36 }}
         />
       )}
+
+      {/* Left accent bar — only on active, non-collapsed */}
+      {active && !collapsed && (
+        <motion.span
+          layoutId="sidebar-bar"
+          className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full bg-[#60A5FA]"
+          style={{ zIndex: 1 }}
+          transition={{ type: "spring", stiffness: 420, damping: 36 }}
+        />
+      )}
+
+      {/* Active collapsed dot indicator */}
+      {active && collapsed && (
+        <motion.span
+          layoutId="sidebar-dot"
+          className="absolute right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#60A5FA]"
+          style={{ zIndex: 1 }}
+        />
+      )}
+
       <Icon
         size={18}
-        className={
-          active
-            ? "text-white shrink-0"
-            : "text-[var(--sidebar-muted)] shrink-0"
-        }
+        className={`shrink-0 relative z-[2] transition-transform duration-150 ${
+          active ? "text-white scale-105" : "text-white/50 group-hover:text-white group-hover:scale-105"
+        }`}
       />
-      {!collapsed && <span className="truncate">{item.label}</span>}
+      {!collapsed && (
+        <span className="truncate relative z-[2] font-medium">
+          {item.label}
+        </span>
+      )}
 
-      {/* Hover underline (non-active, non-collapsed) */}
-      {!active && !collapsed && (
-        <span className="absolute bottom-1 left-3 right-3 h-px bg-[var(--green)] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-200 rounded-full" />
+      {/* Hover bg (non-active) */}
+      {!active && (
+        <motion.span
+          className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/8 transition-colors duration-150"
+          style={{ zIndex: 0 }}
+        />
       )}
 
       {/* Tooltip on collapsed */}
       {collapsed && (
-        <span className="pointer-events-none absolute left-full ml-2 px-2 py-1 rounded-lg bg-[var(--navy)] text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-lg">
+        <span className="pointer-events-none absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-[#1E3A5F] text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-150 z-50 shadow-xl border border-white/10 translate-x-1 group-hover:translate-x-0">
           {item.label}
         </span>
       )}
@@ -160,7 +187,8 @@ function SidebarInner({
       {/* ── Role badge ──────────────────────────── */}
       {!collapsed && (
         <div className="px-4 pt-3 pb-1">
-          <span className="badge badge-green text-[10px] uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-[10px] font-bold uppercase tracking-widest text-blue-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#60A5FA] animate-pulse" />
             {roleLabel}
           </span>
         </div>
@@ -221,7 +249,8 @@ function SidebarInner({
             <button
               onClick={() => {
                 onClose?.();
-                router.push("/login");
+                clearSession();
+                router.replace("/login");
               }}
               title="Sign Out"
               className="flex justify-center w-full py-2 rounded-xl text-red-400 hover:bg-red-900/20 transition-colors"
@@ -247,7 +276,8 @@ function SidebarInner({
             <button
               onClick={() => {
                 onClose?.();
-                router.push("/login");
+                clearSession();
+                router.replace("/login");
               }}
               className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-900/20 transition-colors"
             >

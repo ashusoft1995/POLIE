@@ -91,4 +91,28 @@ public class CrimeReportController {
                 CrimeReport.ReportStatus.valueOf(status.toUpperCase()));
         return ResponseEntity.ok(new ApiResponse<>(true, "Count retrieved successfully", count));
     }
+
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<ApiResponse<CrimeReport>> approveReport(
+            @PathVariable Long id,
+            @RequestParam(required = false) String notes) {
+        try {
+            CrimeReport report = crimeReportService.approveReport(id, notes);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Report approved for investigation", report));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<ApiResponse<CrimeReport>> rejectReport(
+            @PathVariable Long id,
+            @RequestParam(required = false) String notes) {
+        try {
+            CrimeReport report = crimeReportService.rejectReport(id, notes);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Report rejected", report));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, e.getMessage(), null));
+        }
+    }
 }

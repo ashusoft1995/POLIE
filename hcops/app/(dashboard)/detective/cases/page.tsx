@@ -121,7 +121,7 @@ export default function DetectiveCasesPage() {
                       <div className="flex items-center gap-2">
                         <motion.button whileHover={{scale:1.1}} whileTap={{scale:0.95}}
                           onClick={() => setViewCase(c)}
-                          className="p-2 rounded-lg hover:bg-[var(--green-light)] text-[var(--green)] transition-colors">
+                          className="action-btn action-btn-view">
                           <Eye size={16}/>
                         </motion.button>
                       </div>

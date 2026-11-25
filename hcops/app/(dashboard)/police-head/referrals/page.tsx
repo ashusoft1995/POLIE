@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Check, X, Eye, FileText, Clock, CheckCircle, XCircle } from "lucide-react";
 import Modal from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
+import { courtReferralApi } from "@/lib/api-client";
 
 interface Referral {
   id: number;
@@ -43,10 +44,9 @@ export default function PoliceHeadReferralsPage() {
 
   const fetchReferrals = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      const response = await fetch(`${apiUrl}/api/court-referrals`, { signal: AbortSignal.timeout(3000) });
-      const result = await response.json();
-      if (result.success) { setReferrals(result.data); return; }
+      const data = await courtReferralApi.getAll();
+      setReferrals(data as any[]);
+      return;
     } catch {}
     // Mock fallback
     setReferrals([
@@ -83,21 +83,15 @@ export default function PoliceHeadReferralsPage() {
 
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      const response = await fetch(
-        `${apiUrl}/api/court-referrals/${selectedReferral.id}/approve?headId=1`,
-        { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(approvalData), signal: AbortSignal.timeout(4000) }
-      );
-      const result = await response.json();
-      if (result.success) {
-        showToast(approvalData.approved ? "Referral approved successfully!" : "Referral rejected", "success");
-        setIsApprovalModalOpen(false);
-        setIsModalOpen(false);
-        setApprovalData({ approved: true, headRemarks: "", rejectionReason: "" });
-        fetchReferrals();
-        return;
-      }
-      throw new Error(result.message);
+      const user = JSON.parse(sessionStorage.getItem("hcops_user") || "{}");
+      const headId = user.id ?? 1;
+      await courtReferralApi.approve(selectedReferral.id, headId, approvalData);
+      showToast(approvalData.approved ? "Referral approved successfully!" : "Referral rejected", "success");
+      setIsApprovalModalOpen(false);
+      setIsModalOpen(false);
+      setApprovalData({ approved: true, headRemarks: "", rejectionReason: "" });
+      fetchReferrals();
+      return;
     } catch {
       // Mock fallback — update local state
       setReferrals(rs => rs.map(r =>

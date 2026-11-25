@@ -46,7 +46,7 @@ export default function TrackReportPage() {
         // Simple PIN check: last 4 digits of phone or ID
         const phone = (found.reporterPhone||"").replace(/\D/g,"");
         const expectedPin = phone.slice(-4);
-        if (trimPin !== expectedPin && trimPin !== "1234") { setAttempts(a => a+1); setResult("wrong-pin"); setData(null); }
+        if (trimPin !== expectedPin) { setAttempts(a => a+1); setResult("wrong-pin"); setData(null); }
         else { setAttempts(0); setResult("found"); setData(found); }
       }
     } catch {

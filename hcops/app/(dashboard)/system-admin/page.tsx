@@ -7,6 +7,9 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import ScrollReveal, { StaggerParent, StaggerChild } from "@/components/ui/ScrollReveal";
 import { mockUsers } from "@/lib/mock-data/auth";
 import { mockActivityLog } from "@/lib/mock-data/cases";
+import { useDashboardStats } from "@/lib/useDashboardStats";
+import { useSessionUser } from "@/lib/useSessionUser";
+import { CountUp } from "@/components/ui/ScrollReveal";
 
 const systemServices = [
   { name:"API Gateway",       status:"Operational", uptime:"99.9%" },
@@ -19,29 +22,63 @@ const systemServices = [
 
 export default function SystemAdminDashboard() {
   const dateStr = useDateString();
+  const stats   = useDashboardStats();
+  const user    = useSessionUser();
+  const displayName = user?.fullName ?? user?.name ?? "Sys. Admin Yonas Tesfaye";
   return (
     <div className="space-y-6 pb-10">
       <ScrollReveal variant="fadeDown">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-700 to-slate-900 p-6 text-white shadow-xl">
           <div className="pointer-events-none absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/5"/>
           <div className="pointer-events-none absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/5"/>
-          <div className="relative">
-            <p className="text-slate-400 text-sm font-medium">Welcome back,</p>
-            <h2 className="text-xl font-extrabold mt-1">Sys. Admin Yonas Tesfaye</h2>
-            <p className="text-slate-400 text-sm mt-1.5">
-              {dateStr}
-              {" · "}IT & Systems Division
-            </p>
+          <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-slate-400 text-sm font-medium">Welcome back,</p>
+              <h2 className="text-xl font-extrabold mt-1">{displayName}</h2>
+              <p className="text-slate-400 text-sm mt-1.5">
+                {dateStr}
+                {" · "}IT & Systems Division
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 self-start sm:self-center">
+              <Link href="/system-admin/users"
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold px-4 py-2.5 rounded-2xl transition-colors">
+                <Users size={15}/> Manage Users
+              </Link>
+              <Link href="/system-admin/logs"
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold px-4 py-2.5 rounded-2xl transition-colors">
+                <Activity size={15}/> System Logs
+              </Link>
+            </div>
           </div>
         </div>
       </ScrollReveal>
 
+      {/* Quick stat strip */}
+      <StaggerParent className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label:"Registered Users",  value: stats.totalEmployees || mockUsers.length, color:"text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-200" },
+          { label:"Active Employees",  value: stats.activeEmployees || mockUsers.length, color:"text-[var(--green)] bg-green-50 dark:bg-green-900/20 border-green-200" },
+          { label:"Services Online",   value: systemServices.length, color:"text-[var(--yellow-dark)] bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200" },
+          { label:"Security Alerts",   value: 0, color:"text-[var(--pink)] bg-pink-50 dark:bg-pink-900/20 border-pink-200" },
+        ].map(s=>(
+          <StaggerChild key={s.label}>
+            <div className={`card border p-4 ${s.color}`}>
+              <p className={`text-3xl font-extrabold tabular-nums ${s.color.split(" ")[0]}`}>
+                <CountUp to={s.value}/>
+              </p>
+              <p className="text-xs font-semibold mt-1 text-[var(--charcoal)]">{s.label}</p>
+            </div>
+          </StaggerChild>
+        ))}
+      </StaggerParent>
+
       <StaggerParent className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label:"Total Users",      value:mockUsers.length, trend:"up"      as const, trendValue:"In system",         icon:Users,  color:"blue"   as const },
-          { label:"Active Accounts",  value:mockUsers.length, trend:"up"      as const, trendValue:"All active",        icon:Shield, color:"green"  as const },
-          { label:"System Services",  value:systemServices.length, trend:"up" as const, trendValue:"All operational",   icon:Activity,color:"yellow" as const },
-          { label:"Security Alerts",  value:0,                trend:"down"    as const, trendValue:"No alerts today",   icon:AlertCircle,color:"pink" as const },
+          { label:"Total Users",      value: stats.totalEmployees || mockUsers.length, trend:"up"   as const, trendValue:"In system",       icon:Users,      color:"blue"   as const },
+          { label:"Active Accounts",  value: stats.activeEmployees || mockUsers.length,trend:"up"   as const, trendValue:"All active",      icon:Shield,     color:"green"  as const },
+          { label:"System Services",  value: systemServices.length,                    trend:"up"   as const, trendValue:"All operational", icon:Activity,   color:"yellow" as const },
+          { label:"Security Alerts",  value: 0,                                        trend:"down" as const, trendValue:"No alerts today", icon:AlertCircle,color:"pink"   as const },
         ].map((k,i)=><StaggerChild key={k.label}><KpiCard {...k} delay={i*0.08}/></StaggerChild>)}
       </StaggerParent>
 
