@@ -5,7 +5,7 @@
  */
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-const TIMEOUT = 5000;
+const TIMEOUT = 15000; // 15s — Neon DB cold-start can take 8-10s
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;

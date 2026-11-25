@@ -51,23 +51,32 @@ export default function PreventiveForwardPage() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    try {
-      const [reps, dets, cases] = await Promise.all([
-        crimeReportApi.getAll(),
-        employeeApi.getByRole("DETECTIVE"),
-        casesApi.getAll(),
-      ]);
-      // Show PENDING/UNDER_REVIEW reports — forwarding is idempotent so duplicates are handled server-side
-      setReports((reps as Report[]).filter(r =>
+    // Fetch each independently so one failure doesn't blank out everything
+    const [repsResult, detsResult, casesResult] = await Promise.allSettled([
+      crimeReportApi.getAll(),
+      employeeApi.getByRole("DETECTIVE"),
+      casesApi.getAll(),
+    ]);
+
+    if (repsResult.status === "fulfilled") {
+      setReports((repsResult.value as Report[]).filter(r =>
         ["PENDING", "UNDER_REVIEW"].includes(r.status)
       ));
-      setDetectives(dets as Detective[]);
-      setForwards(cases as Forward[]);
-    } catch {
-      addToast("error", "Failed to load data from server.");
-    } finally {
-      setLoading(false);
+    } else {
+      addToast("error", "Could not load crime reports.");
     }
+
+    if (detsResult.status === "fulfilled") {
+      setDetectives(detsResult.value as Detective[]);
+    } else {
+      addToast("error", "Could not load detectives. Check your connection.");
+    }
+
+    if (casesResult.status === "fulfilled") {
+      setForwards(casesResult.value as Forward[]);
+    }
+
+    setLoading(false);
   }, [addToast]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
@@ -249,8 +258,9 @@ export default function PreventiveForwardPage() {
                   Crime Report <span className="text-red-500">*</span>
                 </label>
                 {reports.length === 0 ? (
-                  <div className="p-3 bg-[var(--surface2)] rounded-xl text-xs text-[var(--muted)]">
-                    No unforwarded reports available. File a new crime report first.
+                  <div className="p-3 bg-[var(--surface2)] rounded-xl text-xs text-[var(--muted)] flex items-center justify-between gap-2">
+                    <span>{loading ? "Loading reports…" : "No pending reports available."}</span>
+                    {!loading && <button onClick={fetchAll} className="text-xs font-semibold text-[var(--green)] hover:underline">Retry</button>}
                   </div>
                 ) : (
                   <div className="relative">
@@ -275,8 +285,9 @@ export default function PreventiveForwardPage() {
                   Assign Detective <span className="text-red-500">*</span>
                 </label>
                 {detectives.length === 0 ? (
-                  <div className="p-3 bg-[var(--surface2)] rounded-xl text-xs text-[var(--muted)]">
-                    No detectives found. Register a detective in HR first.
+                  <div className="p-3 bg-[var(--surface2)] rounded-xl text-xs text-[var(--muted)] flex items-center justify-between gap-2">
+                    <span>No detectives loaded.</span>
+                    <button onClick={fetchAll} className="text-xs font-semibold text-[var(--green)] hover:underline">Retry</button>
                   </div>
                 ) : (
                   <div className="relative">
