@@ -1,8 +1,8 @@
 ﻿"use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { UserX, Search, AlertTriangle, Eye, FileText, X, RefreshCw } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import ScrollReveal, { StaggerParent, StaggerChild, CountUp } from "@/components/ui/ScrollReveal";
 import ToastContainer, { ToastMessage } from "@/components/ui/toast";
 import { crimeReportApi } from "@/lib/api-client";
@@ -35,7 +35,16 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function PreventiveCriminalsPage() {
+  return (
+    <Suspense>
+      <CriminalsInner />
+    </Suspense>
+  );
+}
+
+function CriminalsInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [reports, setReports]           = useState<CrimeReport[]>([]);
   const [loading, setLoading]           = useState(true);
   const [search, setSearch]             = useState("");
@@ -54,13 +63,21 @@ export default function PreventiveCriminalsPage() {
       const data = await crimeReportApi.getAll();
       setReports(data as CrimeReport[]);
     } catch {
-      addToast("error", "Failed to load criminal records from server.");
+      addToast("error", "Failed to load records from server.");
     } finally {
       setLoading(false);
     }
   }, [addToast]);
 
   useEffect(() => { fetchReports(); }, [fetchReports]);
+
+  // Auto-open detail when ?open=<id> is in URL (from notification click)
+  useEffect(() => {
+    const openId = searchParams.get("open");
+    if (!openId || reports.length === 0) return;
+    const target = reports.find(r => String(r.id) === openId);
+    if (target) setViewItem(target);
+  }, [searchParams, reports]);
 
   const filtered = reports.filter(r => {
     const q = search.toLowerCase();
