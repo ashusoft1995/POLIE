@@ -26,46 +26,52 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (userRepository.count() > 0) {
-            log.info("Database already seeded. Skipping.");
-            return;
-        }
+        log.info("Checking and upserting default users...");
 
-        log.info("Seeding initial police officers...");
-
-        List<User> users = List.of(
-            User.builder().username("head").email("head@hossanapolice.gov.et")
-                .password(passwordEncoder.encode("head123"))
-                .fullName("Head Habtamu Woldemariam").role(Role.POLICE_HEAD)
-                .badge("PHD-001").rank("Head of Police").build(),
-
-            User.builder().username("detective").email("detective@hossanapolice.gov.et")
-                .password(passwordEncoder.encode("detective123"))
-                .fullName("Det. Abebe Girma").role(Role.DETECTIVE)
-                .badge("DET-012").rank("Detective Sergeant").build(),
-
-            User.builder().username("preventive").email("preventive@hossanapolice.gov.et")
-                .password(passwordEncoder.encode("preventive123"))
-                .fullName("Off. Meron Tadesse").role(Role.PREVENTIVE)
-                .badge("PRV-021").rank("Police Officer I").build(),
-
-            User.builder().username("traffic").email("traffic@hossanapolice.gov.et")
-                .password(passwordEncoder.encode("traffic123"))
-                .fullName("Off. Kebede Alemu").role(Role.TRAFFIC)
-                .badge("TRF-033").rank("Traffic Officer").build(),
-
-            User.builder().username("hr").email("hr@hossanapolice.gov.et")
-                .password(passwordEncoder.encode("hr123"))
-                .fullName("Insp. Almaz Worku").role(Role.HR)
-                .badge("HR-005").rank("HR Inspector").build(),
-
-            User.builder().username("admin").email("admin@hossanapolice.gov.et")
-                .password(passwordEncoder.encode("admin123"))
-                .fullName("Admin Daniel Kebede").role(Role.SYSTEM_ADMIN)
-                .badge("ADM-001").rank("System Administrator").build()
+        List<Object[]> defaults = List.of(
+            new Object[]{"head",       "head@hossanapolice.gov.et",       "head123",        "Head Habtamu Woldemariam", Role.POLICE_HEAD,  "PHD-001", "Head of Police"},
+            new Object[]{"detective",  "detective@hossanapolice.gov.et",  "detective123",   "Det. Abebe Girma",         Role.DETECTIVE,    "DET-012", "Detective Sergeant"},
+            new Object[]{"preventive", "preventive@hossanapolice.gov.et", "preventive123",  "Off. Meron Tadesse",       Role.PREVENTIVE,   "PRV-021", "Police Officer I"},
+            new Object[]{"traffic",    "traffic@hossanapolice.gov.et",    "traffic123",     "Off. Kebede Alemu",        Role.TRAFFIC,      "TRF-033", "Traffic Officer"},
+            new Object[]{"hr",         "hr@hossanapolice.gov.et",         "hr123",          "Insp. Almaz Worku",        Role.HR,           "HR-005",  "HR Inspector"},
+            new Object[]{"admin",      "admin@hossanapolice.gov.et",      "admin123",       "Admin Daniel Kebede",      Role.SYSTEM_ADMIN, "ADM-001", "System Administrator"}
         );
 
-        userRepository.saveAll(users);
-        log.info("✅ Seeded {} users.", users.size());
+        for (Object[] d : defaults) {
+            String username = (String) d[0];
+            String email    = (String) d[1];
+            String password = (String) d[2];
+            String fullName = (String) d[3];
+            Role   role     = (Role)   d[4];
+            String badge    = (String) d[5];
+            String rank     = (String) d[6];
+
+            userRepository.findByUsername(username).ifPresentOrElse(
+                existing -> {
+                    // Always re-encode password so it matches the known plain-text
+                    existing.setPassword(passwordEncoder.encode(password));
+                    existing.setFullName(fullName);
+                    existing.setEmail(email);
+                    existing.setRole(role);
+                    existing.setBadge(badge);
+                    existing.setRank(rank);
+                    existing.setEnabled(true);
+                    existing.setAccountLocked(false);
+                    existing.setFailedLoginAttempts(0);
+                    userRepository.save(existing);
+                    log.info("✅ Updated user: {}", username);
+                },
+                () -> {
+                    User u = User.builder()
+                        .username(username).email(email)
+                        .password(passwordEncoder.encode(password))
+                        .fullName(fullName).role(role)
+                        .badge(badge).rank(rank).build();
+                    userRepository.save(u);
+                    log.info("✅ Created user: {}", username);
+                }
+            );
+        }
+        log.info("✅ All default users are ready.");
     }
 }

@@ -1,69 +1,54 @@
-/**
- * Next.js Edge Middleware
- * Runs on every request BEFORE the page renders.
- *
- * Session purposes covered:
- *  ✅ User authentication   — redirects unauthenticated users to /login
- *  ✅ Security              — prevents any dashboard access without a token
- *  ✅ Role management       — prevents cross-role access (e.g. detective → /police-head)
- */
-
 import { NextRequest, NextResponse } from "next/server";
 
-// Which role is allowed on which path prefix
-const ROLE_ROUTES: Record<string, string> = {
-  "/police-head":  "POLICE_HEAD",
-  "/detective":    "DETECTIVE",
-  "/preventive":   "PREVENTIVE",
-  "/traffic":      "TRAFFIC",
-  "/hr":           "HR",
-  "/system-admin": "SYSTEM_ADMIN",
-  "/citizen":      "citizen",
+const ROLE_ROUTES: Record<string, string[]> = {
+  "/police-head":  ["POLICE_HEAD", "police-head"],
+  "/detective":    ["DETECTIVE",   "detective"],
+  "/preventive":   ["PREVENTIVE",  "preventive"],
+  "/traffic":      ["TRAFFIC",     "traffic"],
+  "/hr":           ["HR",          "hr"],
+  "/system-admin": ["SYSTEM_ADMIN","system-admin"],
+  "/citizen":      ["citizen",     "CITIZEN"],
 };
 
-// Public paths — no token needed
-const PUBLIC_PATHS = ["/login", "/forgot-password", "/_next", "/api", "/images", "/favicon"];
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/_next", "/api", "/images", "/favicon", "/icons"];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow public paths through
+  // Allow public paths
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  // Read token + user from cookies (set by the client after login)
-  const token = req.cookies.get("hcops_token")?.value;
-  const userRaw = req.cookies.get("hcops_user")?.value;
+  const token    = req.cookies.get("hcops_token")?.value;
+  const userRaw  = req.cookies.get("hcops_user")?.value;
 
-  // No token → send to login
+  // No token → redirect to login (no expired banner — first visit)
   if (!token) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", pathname);
+    url.searchParams.delete("expired");
     return NextResponse.redirect(url);
   }
 
-  // Parse stored user role
   let role = "";
   try {
     const user = JSON.parse(decodeURIComponent(userRaw ?? "{}"));
     role = user.role ?? "";
   } catch {
-    // Corrupted cookie → force re-login
     const url = req.nextUrl.clone();
     url.pathname = "/login";
+    url.searchParams.set("expired", "1");
     return NextResponse.redirect(url);
   }
 
-  // Check role matches the route
-  for (const [prefix, requiredRole] of Object.entries(ROLE_ROUTES)) {
+  // Check role matches the route prefix
+  for (const [prefix, allowedRoles] of Object.entries(ROLE_ROUTES)) {
     if (pathname.startsWith(prefix)) {
-      if (role !== requiredRole) {
-        // Redirect to their own dashboard instead of showing 404/blank
-        const own = ownDashboard(role);
+      if (!allowedRoles.includes(role)) {
         const url = req.nextUrl.clone();
-        url.pathname = own;
+        url.pathname = ownDashboard(role);
+        url.search = "";
         return NextResponse.redirect(url);
       }
       break;
@@ -76,17 +61,22 @@ export function middleware(req: NextRequest) {
 function ownDashboard(role: string): string {
   const map: Record<string, string> = {
     POLICE_HEAD:  "/police-head",
+    "police-head":"/police-head",
     DETECTIVE:    "/detective",
+    detective:    "/detective",
     PREVENTIVE:   "/preventive",
+    preventive:   "/preventive",
     TRAFFIC:      "/traffic",
+    traffic:      "/traffic",
     HR:           "/hr",
+    hr:           "/hr",
     SYSTEM_ADMIN: "/system-admin",
+    "system-admin":"/system-admin",
     citizen:      "/citizen",
   };
   return map[role] ?? "/login";
 }
 
 export const config = {
-  // Run on all routes except static files and Next internals
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

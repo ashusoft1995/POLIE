@@ -276,10 +276,10 @@ export default function LoginPage() {
     }
   }, [router]);
 
-  // Show "session expired" banner if middleware redirected here with ?next=
+  // Show "session expired" banner only if redirected here with ?expired=1
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("next")) setSessionExpired(true);
+    if (params.get("expired") === "1") setSessionExpired(true);
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -306,7 +306,9 @@ export default function LoginPage() {
       const id = email.trim().toLowerCase();
       const found = mockUsers.find(
         (u) =>
-          (u.email.toLowerCase() === id || u.name.toLowerCase() === id) &&
+          (u.email.toLowerCase() === id ||
+           u.username.toLowerCase() === id ||
+           u.name.toLowerCase() === id) &&
           u.password === password,
       );
       if (found) {
@@ -398,7 +400,7 @@ export default function LoginPage() {
           {/* Email / Username */}
           <div>
             <label className="block text-[11px] text-purple-200 mb-1.5 font-medium">
-              Email address
+              Email or Username
             </label>
             <input
               type="text"

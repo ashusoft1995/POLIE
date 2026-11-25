@@ -64,10 +64,18 @@ export async function resetPasswordApi(
 
 // ── Role → Dashboard redirect map ───────────────────────────────
 export const roleDashboardMap: Record<string, string> = {
-  POLICE_HEAD:  "/police-head",
-  DETECTIVE:    "/detective",
-  PREVENTIVE:   "/preventive",
-  TRAFFIC:      "/traffic",
-  HR:           "/hr",
-  SYSTEM_ADMIN: "/system-admin",
+  // Backend format (uppercase)
+  POLICE_HEAD:   "/police-head",
+  DETECTIVE:     "/detective",
+  PREVENTIVE:    "/preventive",
+  TRAFFIC:       "/traffic",
+  HR:            "/hr",
+  SYSTEM_ADMIN:  "/system-admin",
+  // Mock / frontend format (lowercase)
+  "police-head": "/police-head",
+  "detective":   "/detective",
+  "preventive":  "/preventive",
+  "traffic":     "/traffic",
+  "hr":          "/hr",
+  "system-admin":"/system-admin",
 };
