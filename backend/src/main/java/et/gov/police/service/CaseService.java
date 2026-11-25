@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CaseService {
@@ -33,6 +34,27 @@ public class CaseService {
     
     @Transactional
     public Case createCase(CaseRequest request, Long createdById) {
+
+        // ── If a case already exists for this crime report, return it (idempotent) ──
+        if (request.getCrimeReportId() != null) {
+            CrimeReport existingReport = crimeReportRepository.findById(request.getCrimeReportId())
+                    .orElseThrow(() -> new RuntimeException("Crime report not found"));
+            Optional<Case> existing = caseRepository.findByRelatedCrimeReport(existingReport);
+            if (existing.isPresent()) {
+                // Re-assign detective if a new one was provided
+                Case ec = existing.get();
+                if (request.getAssignedDetectiveId() != null) {
+                    User detective = userRepository.findById(request.getAssignedDetectiveId())
+                            .orElseThrow(() -> new RuntimeException("Detective not found"));
+                    ec.setAssignedDetective(detective);
+                    ec.setAssignedAt(LocalDateTime.now());
+                    ec.setStatus(Case.CaseStatus.UNDER_INVESTIGATION);
+                    return caseRepository.save(ec);
+                }
+                return ec;
+            }
+        }
+
         Case caseEntity = new Case();
         
         // Generate case number

@@ -1,6 +1,7 @@
 package et.gov.police.repository;
 
 import et.gov.police.model.Case;
+import et.gov.police.model.CrimeReport;
 import et.gov.police.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -12,6 +13,8 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
     
     Optional<Case> findByCaseNumber(String caseNumber);
     
+    Optional<Case> findByRelatedCrimeReport(CrimeReport crimeReport);
+
     List<Case> findByAssignedDetective(User detective);
     
     List<Case> findByAssignedDetectiveOrderByCreatedAtDesc(User detective);

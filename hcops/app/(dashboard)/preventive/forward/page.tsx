@@ -57,10 +57,9 @@ export default function PreventiveForwardPage() {
         employeeApi.getByRole("DETECTIVE"),
         casesApi.getAll(),
       ]);
-      // Only show PENDING or UNDER_REVIEW crime reports that haven't been forwarded yet
-      const forwarded = new Set((cases as any[]).map((c: any) => c.relatedCrimeReport?.id).filter(Boolean));
+      // Show PENDING/UNDER_REVIEW reports — forwarding is idempotent so duplicates are handled server-side
       setReports((reps as Report[]).filter(r =>
-        ["PENDING","UNDER_REVIEW"].includes(r.status) && !forwarded.has(r.id)
+        ["PENDING", "UNDER_REVIEW"].includes(r.status)
       ));
       setDetectives(dets as Detective[]);
       setForwards(cases as Forward[]);
@@ -94,8 +93,9 @@ export default function PreventiveForwardPage() {
       if (!report) throw new Error("Report not found.");
 
       // Create a real case linked to this crime report
-      await casesApi.create({
-        title:               `Case: ${report.crimeType} — ${report.incidentLocation}`,
+      // Backend is idempotent — if a case already exists for this report it re-assigns the detective
+      const result = await casesApi.create({
+        title:               `Case: ${report.crimeType.replace(/_/g," ")} — ${report.incidentLocation}`,
         caseType:            mapCrimeType(report.crimeType),
         description:         form.notes.trim() || report.description,
         priority:            form.priority,
@@ -104,11 +104,21 @@ export default function PreventiveForwardPage() {
         assignedDetectiveId: Number(form.detectiveId),
         crimeReportId:       report.id,
       });
-      addToast("success", `Case forwarded to detective and saved to database.`);
+
+      const det = detectives.find(d => d.id === Number(form.detectiveId));
+      const detName = det ? detectiveName(det) : "detective";
+      addToast("success", `Case forwarded to ${detName} — detective has been notified.`);
       setModalOpen(false);
       await fetchAll();
     } catch (err: any) {
-      addToast("error", err?.message ?? "Forwarding failed.");
+      const msg = err?.message ?? "";
+      if (msg.toLowerCase().includes("duplicate") || msg.toLowerCase().includes("already")) {
+        addToast("warning", "This report already has a case. Re-assigning detective...");
+        setModalOpen(false);
+        await fetchAll();
+      } else {
+        addToast("error", msg || "Forwarding failed. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
