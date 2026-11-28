@@ -8,6 +8,7 @@ import et.gov.police.security.UserDetailsServiceImpl;
 import et.gov.police.service.CaseService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,12 +38,14 @@ public class CaseController {
     }
     
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<Case>>> getAllCases() {
         List<Case> cases = caseService.getAllCases();
         return ResponseEntity.ok(new ApiResponse<>(true, "Cases retrieved successfully", cases));
     }
     
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<Case>> getCaseById(@PathVariable Long id) {
         try {
             Case caseEntity = caseService.getCaseById(id);
@@ -53,6 +56,7 @@ public class CaseController {
     }
     
     @GetMapping("/number/{caseNumber}")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<Case>> getCaseByCaseNumber(@PathVariable String caseNumber) {
         try {
             Case caseEntity = caseService.getCaseByCaseNumber(caseNumber);
@@ -63,12 +67,14 @@ public class CaseController {
     }
     
     @GetMapping("/detective/{detectiveId}")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<Case>>> getCasesByDetective(@PathVariable Long detectiveId) {
         List<Case> cases = caseService.getCasesByDetective(detectiveId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Cases retrieved successfully", cases));
     }
     
     @GetMapping("/status/{status}")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<Case>>> getCasesByStatus(@PathVariable String status) {
         List<Case> cases = caseService.getCasesByStatus(
                 Case.CaseStatus.valueOf(status.toUpperCase()));

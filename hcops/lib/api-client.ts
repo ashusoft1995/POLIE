@@ -25,20 +25,35 @@ async function request<T>(
   path: string,
   body?: unknown,
 ): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: headers(),
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(TIMEOUT),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message ?? "Request failed");
+  try {
+    const url = `${BASE}${path}`;
+    console.log(`[API] ${method} ${url}`);
+    const res = await fetch(url, {
+      method,
+      headers: headers(),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(TIMEOUT),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      // Store status code for error handling
+      const error = new Error(err.message ?? "Request failed");
+      (error as any).status = res.status;
+      throw error;
+    }
+    const json = await res.json();
+    // Backend wraps in { success, message, data }
+    if (json && typeof json === "object" && "data" in json) return json.data as T;
+    return json as T;
+  } catch (err: any) {
+    // Don't log 403/401 auth errors - they're expected when user doesn't have permission
+    const status = err?.status;
+    const isAuthError = status === 403 || status === 401;
+    if (!isAuthError) {
+      console.error(`[API Error] ${method} ${BASE}${path}:`, err?.message || err);
+    }
+    throw err;
   }
-  const json = await res.json();
-  // Backend wraps in { success, message, data }
-  if (json && typeof json === "object" && "data" in json) return json.data as T;
-  return json as T;
 }
 
 export const api = {

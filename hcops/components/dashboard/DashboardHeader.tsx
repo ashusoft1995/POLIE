@@ -79,6 +79,13 @@ export default function DashboardHeader({
 
   const fetchNotifications = useCallback(async () => {
     const items: Notification[] = [];
+    
+    // Check if user is authenticated
+    const token = typeof window !== "undefined" ? sessionStorage.getItem("hcops_token") : null;
+    if (!token) {
+      setNotifs(items);
+      return;
+    }
 
     try {
       const reports = await crimeReportApi.getByStatus("PENDING");
@@ -94,7 +101,9 @@ export default function DashboardHeader({
           href:  `/preventive/criminals?open=${r.id}`,
         });
       });
-    } catch { /* backend unavailable */ }
+    } catch (err) { 
+      console.debug("Crime reports unavailable:", err);
+    }
 
     try {
       const leaves = await leaveApi.getByStatus("PENDING");
@@ -110,7 +119,10 @@ export default function DashboardHeader({
           href:  `/hr/leave?open=${l.id}`,
         });
       });
-    } catch { /* skip */ }
+    } catch (err) { 
+      // Leave requests may not be available if user is not HR
+      console.debug("Leave requests unavailable:", err);
+    }
 
     try {
       const referrals = await courtReferralApi.getAll();

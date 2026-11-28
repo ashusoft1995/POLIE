@@ -38,6 +38,15 @@ export default function DetectiveClosurePage() {
     setLoading(true);
     try {
       const user = JSON.parse(sessionStorage.getItem("hcops_user") || "{}");
+      const token = sessionStorage.getItem("hcops_token");
+      
+      // Check if user is authenticated
+      if (!token) {
+        addToast("error", "Authentication required. Please log in again.");
+        setLoading(false);
+        return;
+      }
+      
       // Load active cases for this detective (to pick one for closure)
       const all = user.id
         ? await casesApi.getByDetective(user.id)
@@ -49,7 +58,8 @@ export default function DetectiveClosurePage() {
       // Cases already flagged for closure review
       const pending = all.filter((c: any) => c.status === "PENDING_COURT");
       setPendingClosure(pending);
-    } catch {
+    } catch (err: any) {
+      console.error("Error loading cases:", err);
       addToast("error", "Could not load cases from server.");
     } finally {
       setLoading(false);

@@ -8,6 +8,7 @@ import et.gov.police.security.UserDetailsServiceImpl;
 import et.gov.police.service.LeaveRequestService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,6 +38,7 @@ public class LeaveRequestController {
     }
     
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<LeaveRequest>>> getAllLeaveRequests() {
         List<LeaveRequest> requests = leaveRequestService.getAllLeaveRequests();
         return ResponseEntity.ok(new ApiResponse<>(true, "Leave requests retrieved successfully", requests));
@@ -53,6 +55,7 @@ public class LeaveRequestController {
     }
     
     @GetMapping("/status/{status}")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<LeaveRequest>>> getLeaveRequestsByStatus(@PathVariable String status) {
         try {
             List<LeaveRequest> requests = leaveRequestService.getLeaveRequestsByStatus(

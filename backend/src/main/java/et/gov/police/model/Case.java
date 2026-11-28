@@ -1,5 +1,7 @@
 package et.gov.police.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -8,66 +10,69 @@ import java.util.List;
 @Entity
 @Table(name = "cases")
 public class Case {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false, unique = true)
     private String caseNumber;
-    
+
     @Column(nullable = false)
     private String title;
-    
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private CaseType caseType;
-    
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
-    
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private CaseStatus status = CaseStatus.OPEN;
-    
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private CasePriority priority = CasePriority.MEDIUM;
-    
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "assigned_detective_id", nullable = false)
+    @JsonIgnoreProperties({"password","resetOtp","resetOtpExpiry","failedLoginAttempts","accountLocked","enabled","lastLoginAt","createdAt","updatedAt"})
     private User assignedDetective;
-    
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by_id")
+    @JsonIgnoreProperties({"password","resetOtp","resetOtpExpiry","failedLoginAttempts","accountLocked","enabled","lastLoginAt","createdAt","updatedAt"})
     private User createdBy;
-    
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
-    
+
     private LocalDateTime assignedAt;
-    
     private LocalDateTime closedAt;
-    
+
     @Column(columnDefinition = "TEXT")
     private String investigationNotes;
-    
+
     @Column(columnDefinition = "TEXT")
     private String closureNotes;
-    
-    @OneToMany(mappedBy = "caseEntity", cascade = CascadeType.ALL)
+
+    @OneToMany(mappedBy = "caseEntity", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Evidence> evidences = new ArrayList<>();
-    
+
     private String location;
-    
     private LocalDateTime incidentDate;
-    
-    @OneToOne
+
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "crime_report_id")
+    @JsonIgnoreProperties({"assignedOfficer","officerNotes","description","suspectDescription","reporterAddress","reporterEmail"})
     private CrimeReport relatedCrimeReport;
-    
-    @OneToOne
+
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "missing_person_id")
+    @JsonIgnore
     private MissingPerson relatedMissingPerson;
     
     public enum CaseType {

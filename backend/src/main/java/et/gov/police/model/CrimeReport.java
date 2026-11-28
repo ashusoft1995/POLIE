@@ -1,5 +1,6 @@
 package et.gov.police.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -43,8 +44,9 @@ public class CrimeReport {
     @Column(nullable = false)
     private LocalDateTime submittedAt = LocalDateTime.now();
     
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "assigned_to")
+    @JsonIgnoreProperties({"password","resetOtp","resetOtpExpiry","failedLoginAttempts","accountLocked","enabled","lastLoginAt","createdAt","updatedAt"})
     private User assignedOfficer;
     
     private LocalDateTime assignedAt;

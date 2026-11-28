@@ -1,56 +1,60 @@
 package et.gov.police.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "evidences")
 public class Evidence {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false, unique = true)
     private String evidenceNumber;
-    
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "case_id", nullable = false)
+    @JsonIgnore
     private Case caseEntity;
-    
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private EvidenceType type;
-    
+
     @Column(nullable = false)
     private String description;
-    
+
     @Column(nullable = false)
     private String collectedLocation;
-    
+
     @Column(nullable = false)
     private LocalDateTime collectedDate;
-    
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "collected_by_id", nullable = false)
+    @JsonIgnoreProperties({"password","resetOtp","resetOtpExpiry","failedLoginAttempts","accountLocked","enabled","lastLoginAt","createdAt","updatedAt"})
     private User collectedBy;
-    
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private ChainOfCustody custody = ChainOfCustody.COLLECTED;
-    
+
     private String storageLocation;
-    
+
     @Column(columnDefinition = "TEXT")
     private String notes;
-    
+
     private String filePath;
-    
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
-    
+
     private LocalDateTime analyzedAt;
-    
+
     @Column(columnDefinition = "TEXT")
     private String analysisResult;
     
